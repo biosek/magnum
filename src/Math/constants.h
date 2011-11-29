@@ -27,6 +27,35 @@ namespace Magnum { namespace Math {
 /** @brief Maximal tolerance when comparing floats */
 #define EPSILON 1.0e-6
 
+/**
+ * @brief Angle in degrees
+ *
+ * Literal to make angle entering less error-prone. Converts the value to
+ * radians at compile time. For example @c 180_deg is converted to @c 3.14.
+ */
+inline constexpr double operator "" _deg(long double value) { return value*PI/180; }
+
+/**
+ * @brief Angle in degrees, converted to float
+ *
+ * See also operator "" _deg().
+ */
+inline constexpr float operator "" _degf(long double value) { return value*PI/180; }
+
+/**
+ * @brief Angle in radians
+ *
+ * See also operator "" _deg().
+ */
+inline constexpr double operator "" _rad(long double value) { return value; }
+
+/**
+ * @brief Angle in radians, converted to float
+ *
+ * See also operator "" _rad().
+ */
+inline constexpr float operator "" _radf(long double value) { return value; }
+
 }}
 
 #endif

@@ -41,6 +41,12 @@ typedef Math::Matrix3<GLfloat> Matrix3;
 /** @brief 4x4 floating-point matrix */
 typedef Math::Matrix4<GLfloat> Matrix4;
 
+/* Copying useful literal operators from Math namespace */
+using Math::operator "" _deg;
+using Math::operator "" _degf;
+using Math::operator "" _rad;
+using Math::operator "" _radf;
+
 }
 
 #endif
