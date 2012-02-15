@@ -1,7 +1,7 @@
 #ifndef Magnum_Math_Vector4_h
 #define Magnum_Math_Vector4_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -23,7 +23,7 @@
 
 namespace Magnum { namespace Math {
 
-/** @brief Vector (four-component) */
+/** @brief Four-component vector */
 template<class T> class Vector4: public Vector<T, 4> {
     public:
         /**
@@ -96,10 +96,10 @@ template<class T> class Vector4: public Vector<T, 4> {
         /** @copydoc Vector::operator=() */
         inline Vector4<T>& operator=(const Vector<T, 4>& other) { return Vector<T, 4>::operator=(other); }
 
-        /** @copydoc Vector::operator*(const Vector<T, size>&) */
+        /** @copydoc Vector::operator*(const Vector<T, size>&) const */
         inline T operator*(const Vector<T, 4>& other) const { return Vector<T, 4>::operator*(other); }
 
-        /** @copydoc Vector::operator*(T) */
+        /** @copydoc Vector::operator*(T) const */
         inline Vector4<T> operator*(T number) const { return Vector<T, 4>::operator*(number); }
 
         /** @copydoc Vector::operator/() */
@@ -108,7 +108,7 @@ template<class T> class Vector4: public Vector<T, 4> {
         /** @copydoc Vector::operator+() */
         inline Vector4<T> operator+(const Vector<T, 4>& other) const { return Vector<T, 4>::operator+(other); }
 
-        /** @copydoc Vector::operator-(const Vector<T, size>&) */
+        /** @copydoc Vector::operator-(const Vector<T, size>&) const */
         inline Vector4<T> operator-(const Vector<T, 4>& other) const { return Vector<T, 4>::operator-(other); }
 
         /** @copydoc Vector::operator-() */
@@ -119,7 +119,7 @@ template<class T> class Vector4: public Vector<T, 4> {
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<class T> Corrade::Utility::Debug& operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Vector4<T>& value) {
+template<class T> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Vector4<T>& value) {
     return debug << static_cast<const Magnum::Math::Vector<T, 4>&>(value);
 }
 #endif

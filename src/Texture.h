@@ -1,7 +1,7 @@
 #ifndef Magnum_Texture_h
 #define Magnum_Texture_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -19,256 +19,123 @@
  * @brief Class Magnum::Texture
  */
 
-#include "Magnum.h"
+#include "Trade/Image.h"
 
 namespace Magnum {
 
 /**
- * @brief Texture
- *
- * Template class for one- to three-dimensional textures. Recommended usage is
- * via subclassing and setting texture data from e.g. constructor with
- * setData().
+@brief %Texture
+
+Template class for one- to three-dimensional textures.
+
+@attention Don't forget to call setMinificationFilter() and
+setMagnificationFilter() after creating the texture, otherwise it will be
+unusable.
+
+The texture is bound via bind() and setting texture uniform on the shader to the
+texture (see AbstractShaderProgram::setUniform(GLint, const AbstractTexture*)).
+In shader, the texture is used via @c sampler1D, @c sampler2D or @c sampler3D
+depending on dimension count. Note that you can have more than one texture bound
+to the shader - the only requirement is to have each texture in another layer.
+
+@section RectangleTextures Rectangle textures
+
+If you want to use rectangle textures, set target in constructor to
+@c GL_TEXTURE_RECTANGLE and in shader use @c sampler2DRect. Unlike @c sampler2D,
+which accepts coordinates between 0 and 1, @c sampler2DRect accepts coordinates
+between 0 and @c textureSizeInGivenDirection-1. Note that rectangle textures
+don't support mipmapping and repeating wrapping modes, see @ref Texture::Filter
+"Filter", @ref Texture::Mipmap "Mipmap" and generateMipmap() documentation
+for more information.
  */
-template<size_t dimensions> class Texture {
+template<size_t dimensions> class MAGNUM_EXPORT Texture: public AbstractTexture {
     public:
-        /** @brief Texture filtering */
-        enum Filter {
-            /**
-             * Nearest neighbor filtering
-             */
-            NearestNeighbor = GL_NEAREST,
-
-            /**
-             * Linear filtering
-             */
-            Linear = GL_LINEAR
-        };
-
-        /** @brief Mip level selection */
-        enum Mipmap {
-            /**
-             * Select base mipmap level.
-             */
-            BaseLevel = 0,
-
-            /**
-             * Select nearest mip level.
-             */
-            NearestLevel = 0x100,
-
-            /**
-             * Linear interpolation of nearest mip levels.
-             */
-            LinearInterpolation = 0x102
-        };
-
-        /** @brief Texture wrapping on the edge */
-        enum Wrapping {
-            /**
-             * Repeat texture
-             */
-            Repeat = GL_REPEAT,
-
-            /**
-             * Repeat mirrored texture
-             */
-            MirroredRepeat = GL_MIRRORED_REPEAT,
-
-            /**
-             * Clamp to edge. Coordinates out of the range will be clamped to
-             * first / last column / row in given direction.
-             */
-            ClampToEdge = GL_CLAMP_TO_EDGE,
-
-            /**
-             * Clamp to border color. Coordinates out of range will be clamped
-             * to border color (set with setBorderColor()).
-             */
-            ClampToBorder = GL_CLAMP_TO_BORDER
-        };
-
-        /** @brief Internal format */
-        enum InternalFormat {
-            CompressedRed = GL_COMPRESSED_RED,
-            CompressedRedGreen = GL_COMPRESSED_RG,
-            CompressedRGB = GL_COMPRESSED_RGB,
-            CompressedRGBA = GL_COMPRESSED_RGBA
-        };
-
-        /** @brief Color format */
-        enum ColorFormat {
-            Red = GL_RED,
-            RedGreen = GL_RG,
-            RGB = GL_RGB,
-            RGBA = GL_RGBA,
-            BGR = GL_BGR,
-            BGRA = GL_BGRA
-        };
+        static const size_t Dimensions = dimensions;    /**< @brief Texture dimension count */
 
         /**
          * @brief Constructor
+         * @param layer     Texture layer (number between 0 and 31)
+         * @param target    Target, e.g. @c GL_TEXTURE_RECTANGLE. If not set,
+         *      target is based on dimension count (@c GL_TEXTURE_1D,
+         *      @c GL_TEXTURE_2D, @c GL_TEXTURE_3D).
          *
          * Creates one OpenGL texture.
          */
-        inline Texture(): target(GL_TEXTURE_1D + dimensions - 1) {
-            glGenTextures(1, &texture);
-        }
-
-        /**
-         * @brief Destructor
-         *
-         * Deletes assigned OpenGL texture.
-         */
-        inline virtual ~Texture() {
-            glDeleteTextures(1, &texture);
-        }
-
-        /** @brief Bind texture for usage / rendering */
-        inline void bind() const {
-            glBindTexture(dimensions, texture);
-        }
-
-        /**
-         * @brief Unbind texture
-         *
-         * @note Unbinds any texture from given dimension, not only this
-         * particular one.
-         */
-        inline void unbind() const {
-            glBindTexture(dimensions, texture);
-        }
-
-        /**
-         * @brief Set minification filter
-         * @param filter        Filter
-         * @param mipmap        Mipmap filtering. If set to anything else than
-         *      BaseLevel, make sure textures for all mip levels are set or call
-         *      generateMipmap().
-         *
-         * Sets filter used when the object pixel size is smaller than the
-         * texture size.
-         */
-        inline void setMinificationFilter(Filter filter, Mipmap mipmap = BaseLevel) {
-            bind();
-            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter|mipmap);
-            unbind();
-        }
-
-        /**
-         * @brief Set magnification filter
-         * @param filter        Filter
-         *
-         * Sets filter used when the object pixel size is larger than largest
-         * texture size.
-         */
-        inline void setMagnificationFilter(Filter filter) {
-            bind();
-            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
-            unbind();
-        }
+        inline Texture(GLint layer = 0, GLenum target = DataHelper<Dimensions>::target()): AbstractTexture(layer, target) {}
 
         /**
          * @brief Set wrapping
          * @param wrapping      Wrapping type for all texture dimensions
          *
-         * Sets wrapping type for coordinates out of range (-1, 1).
+         * Sets wrapping type for coordinates out of range (0, 1) for normal
+         * textures and (0, textureSizeInGivenDirection-1) for rectangle
+         * textures. Note that for rectangle textures repeating wrapping modes
+         * are unavailable.
          */
-        void setWrapping(const Math::Vector<Wrapping, dimensions>& wrapping) {
-            bind();
-            for(int i = 0; i != dimensions; ++i) switch(i) {
-                case 0:
-                    glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapping.at(i));
-                    break;
-                case 1:
-                    glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapping.at(i));
-                    break;
-                case 2:
-                    glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapping.at(i));
-                    break;
-            }
-            unbind();
-        }
+        void setWrapping(const Math::Vector<Wrapping, Dimensions>& wrapping);
 
-        /**
-         * @brief Set border color
-         *
-         * Border color when wrapping is set to ClampToBorder.
-         */
-        void setBorderColor(const Vector4& color) {
-            bind();
-            glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color.data());
-            unbind();
-        }
-
-        /**
-         * @brief Generate mipmap
-         *
-         * @see setMinificationFilter()
-         */
-        void generateMipmap() {
-            bind();
-            glGenerateMipmap(target);
-            unbind();
-        }
-
-    protected:
         /**
          * @brief Set texture data
          * @param mipLevel          Mip level
-         * @param internalFormat    Internal texture format. One value from
-         *      InternalFormat or ColorFormat enum.
-         * @param _dimensions       Texture dimensions
+         * @param internalFormat    Internal texture format
+         * @param _dimensions       %Texture dimensions
          * @param colorFormat       Color format of passed data. Data size per
          *      color channel is detected from format of passed data array.
-         * @param data              Texture data.
+         * @param data              %Texture data
+         *
+         * Sets texture from given data. The data are not deleted afterwards.
          */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLubyte* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_UNSIGNED_BYTE, data);
-        }
-
-        /** @copydoc setData() */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLbyte* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_BYTE, data);
-        }
-
-        /** @copydoc setData() */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLushort* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_UNSIGNED_SHORT, data);
-        }
-
-        /** @copydoc setData() */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLshort* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_SHORT, data);
-        }
-
-        /** @copydoc setData() */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLuint* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_UNSIGNED_INT, data);
-        }
-
-        /** @copydoc setData() */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLint* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_INT, data);
-        }
-
-        /** @copydoc setData() */
-        inline void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, const GLfloat* data) {
-            setData(mipLevel, internalFormat, _dimensions, colorFormat, GL_FLOAT, data);
-        }
-
-    private:
-        GLuint texture;
-        const GLenum target;
-
-        void setData(GLint mipLevel, int internalFormat, const Math::Vector<GLsizei, dimensions>& _dimensions, ColorFormat colorFormat, GLenum pixelFormat, const GLvoid* data) {
+        template<class T> inline void setData(GLint mipLevel, InternalFormat internalFormat, const Math::Vector<GLsizei, Dimensions>& _dimensions, ColorFormat colorFormat, const T* data) {
             bind();
-            if(dimensions == 1)
-                glTexImage1D(target, mipLevel, internalFormat, _dimensions.at(0), 0, colorFormat, pixelFormat, data);
-            else if(dimensions == 2)
-                glTexImage2D(target, mipLevel, internalFormat, _dimensions.at(0), _dimensions.at(1), 0, colorFormat, pixelFormat, data);
-            else if(dimensions == 3)
-                glTexImage3D(target, mipLevel, internalFormat, _dimensions.at(0), _dimensions.at(1), _dimensions.at(2), 0, colorFormat, pixelFormat, data);
+            DataHelper<Dimensions>::set(target, mipLevel, internalFormat, _dimensions, colorFormat, TypeTraits<typename TypeTraits<T>::TextureType>::glType(), data);
+            unbind();
+        }
+
+        /**
+         * @brief Set texture data
+         * @param mipLevel          Mip level
+         * @param internalFormat    Internal texture format
+         * @param image             Image
+         *
+         * Sets texture data from given image. The image is not deleted
+         * afterwards.
+         */
+        inline void setData(GLint mipLevel, InternalFormat internalFormat, const Trade::Image<Dimensions>* image) {
+            bind();
+            DataHelper<dimensions>::set(target, mipLevel, internalFormat, image->dimensions(), image->colorFormat(), image->type(), image->data());
+            unbind();
+        }
+
+        /**
+         * @brief Set texture subdata
+         * @param mipLevel          Mip level
+         * @param offset            Offset where to put data in the texture
+         * @param _dimensions       %Texture dimensions
+         * @param colorFormat       Color format of passed data. Data size per
+         *      color channel is detected from format of passed data array.
+         * @param data              %Texture data
+         *
+         * Sets texture subdata from given data. The data are not deleted
+         * afterwards.
+         */
+        template<class T> inline void setSubData(GLint mipLevel, const Math::Vector<GLint, Dimensions>& offset, const Math::Vector<GLsizei, Dimensions>& _dimensions, ColorFormat colorFormat, const T* data) {
+            bind();
+            DataHelper<Dimensions>::setSub(target, mipLevel, offset, _dimensions, colorFormat, TypeTraits<typename TypeTraits<T>::TextureType>::glType(), data);
+            unbind();
+        }
+
+        /**
+         * @brief Set texture subdata
+         * @param mipLevel          Mip level
+         * @param offset            Offset where to put data in the texture
+         * @param image             Image
+         *
+         * Sets texture subdata from given image. The image is not deleted
+         * afterwards.
+         */
+        inline void setSubData(GLint mipLevel, const Math::Vector<GLint, Dimensions>& offset, const Trade::Image<Dimensions>* image) {
+            bind();
+            DataHelper<Dimensions>::setSub(target, mipLevel, offset, image->dimensions(), image->colorFormat(), image->type(), image->data());
             unbind();
         }
 };

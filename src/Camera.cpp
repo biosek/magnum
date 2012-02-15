@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -18,25 +18,8 @@
 
 namespace Magnum {
 
-Camera::Camera(Object* parent): Object(parent), _active(0), viewportWidth(0), viewportHeight(0), _aspectRatioPolicy(Extend) {
+Camera::Camera(Object* parent): Object(parent), _aspectRatioPolicy(Extend) {
     setOrthographic(2, 1, 1000);
-}
-
-void Camera::setActive(Scene* _scene) {
-    if(_scene == _active || scene() != _scene) return;
-
-    Scene* oldActive = _active;
-
-    /* Set camera active in new scene */
-    _active = _scene;
-    if(_active) _active->setCamera(this);
-
-    /* Remove the camera from current active scene, if the camera is still
-       active there */
-    if(oldActive && oldActive->camera() == this) oldActive->setCamera(0);
-
-    /* Clean the path to scene */
-    setClean();
 }
 
 void Camera::setOrthographic(GLfloat size, GLfloat near, GLfloat far) {
@@ -79,57 +62,38 @@ void Camera::setPerspective(GLfloat fov, GLfloat near, GLfloat far) {
     fixAspectRatio();
 }
 
-void Camera::setViewport(int width, int height) {
-    glViewport(0, 0, width, height);
+void Camera::setViewport(const Math::Vector2<unsigned int>& size) {
+    glViewport(0, 0, size.x(), size.y());
 
-    viewportWidth = width;
-    viewportHeight = height;
+    _viewport = size;
     fixAspectRatio();
 }
 
 void Camera::setClean() {
     if(!isDirty()) return;
-    _cameraMatrix = transformation(true).inverse();
+    _cameraMatrix = absoluteTransformation().inverse();
     Object::setClean();
-}
-
-void Camera::setDirty() {
-    Object::setDirty();
-
-    /* Camera is active */
-    if(_active) {
-        Scene* currentScene = scene();
-
-        /* Camera is not part of the scene anymore, remove it from there */
-        if(!currentScene) _active->setCamera(0);
-
-        /* Otherwise set the scene dirty */
-        else _active->setDirty();
-
-        /* Clean up the path to scene immediately */
-        setClean();
-    }
 }
 
 void Camera::fixAspectRatio() {
     /* Don't divide by zero */
-    if(viewportWidth == 0 || viewportHeight == 0) {
+    if(_viewport.x() == 0 || _viewport.y() == 0) {
         _projectionMatrix = rawProjectionMatrix;
         return;
     }
 
     /* Extend on larger side = scale larger side down */
     if(_aspectRatioPolicy == Extend) {
-        _projectionMatrix = ((viewportWidth > viewportHeight) ?
-            Matrix4::scaling(static_cast<GLfloat>(viewportHeight)/viewportWidth, 1, 1) :
-            Matrix4::scaling(1, static_cast<GLfloat>(viewportWidth)/viewportHeight, 1)
+        _projectionMatrix = ((_viewport.x() > _viewport.y()) ?
+            Matrix4::scaling(static_cast<GLfloat>(_viewport.y())/_viewport.x(), 1, 1) :
+            Matrix4::scaling(1, static_cast<GLfloat>(_viewport.x())/_viewport.y(), 1)
         )*rawProjectionMatrix;
 
     /* Clip on smaller side = scale smaller side up */
     } else if(_aspectRatioPolicy == Clip) {
-        _projectionMatrix = ((viewportWidth > viewportHeight) ?
-            Matrix4::scaling(1, static_cast<GLfloat>(viewportWidth)/viewportHeight, 1) :
-            Matrix4::scaling(static_cast<GLfloat>(viewportHeight)/viewportWidth, 1, 1)
+        _projectionMatrix = ((_viewport.x() > _viewport.y()) ?
+            Matrix4::scaling(1, static_cast<GLfloat>(_viewport.x())/_viewport.y(), 1) :
+            Matrix4::scaling(static_cast<GLfloat>(_viewport.y())/_viewport.x(), 1, 1)
         )*rawProjectionMatrix;
 
     /* Don't preserve anything */

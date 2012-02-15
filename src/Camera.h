@@ -1,7 +1,7 @@
 #ifndef Magnum_Camera_h
 #define Magnum_Camera_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -21,14 +21,19 @@
 
 #include "Object.h"
 
+#ifdef WIN32 /* I so HATE windows.h */
+#undef near
+#undef far
+#endif
+
 namespace Magnum {
 
 /**
- * @brief Camera object
+ * @brief %Camera object
  *
  * @todo Subclasses - perspective, FBO postprocessing etc.
  */
-class Camera: public Object {
+class MAGNUM_EXPORT Camera: public Object {
     public:
         /** @brief Aspect ratio policy */
         enum AspectRatioPolicy {
@@ -43,21 +48,7 @@ class Camera: public Object {
          *
          * Calls <tt>setOrthographic(2, 1, 1000)</tt>.
          */
-        Camera(Object* parent = 0);
-
-        /**
-         * @brief Scene in which the camera is active
-         * @return If the camera is not active anywhere, returns 0.
-         */
-        inline Scene* active() const { return _active; }
-
-        /**
-         * @brief Make camera active in given scene
-         *
-         * If passed 0 as @c scene and this camera is active in an scene, the
-         * camera will be removed from that scene.
-         */
-        void setActive(Scene* scene);
+        Camera(Object* parent = nullptr);
 
         /** @brief Aspect ratio policy */
         AspectRatioPolicy aspectRatioPolicy() const { return _aspectRatioPolicy; }
@@ -109,36 +100,34 @@ class Camera: public Object {
          */
         inline Matrix4 projectionMatrix() const { return _projectionMatrix; }
 
+        /** @brief Viewport size */
+        inline Math::Vector2<unsigned int> viewport() const { return _viewport; }
+
         /**
-         * @brief Set viewport
-         * @param width     Window / buffer width
-         * @param height    Window / buffer height
+         * @brief Set viewport size
          *
          * Called when assigning the camera to the scene or when window
          * size changes.
          */
-        void setViewport(int width, int height);
+        void setViewport(const Math::Vector2<unsigned int>& size);
+
+        /** @copydoc setViewport(const Math::Vector2<unsigned int>& size); */
+        inline void setViewport(unsigned int width, unsigned int height) {
+            setViewport({width, height});
+        }
 
         /**
          * Recalculates camera matrix.
          */
         virtual void setClean();
 
-        /**
-         * If the camera was active before and is still active, calls
-         * setDirty() on the scene, if is not part of the scene anymore, calls
-         * setCamera(0) on the scene.
-         */
-        virtual void setDirty();
-
     private:
         Matrix4 rawProjectionMatrix;
         Matrix4 _projectionMatrix;
         Matrix4 _cameraMatrix;
         GLfloat _near, _far;
-        Scene* _active;
 
-        int viewportWidth, viewportHeight;
+        Math::Vector2<unsigned int> _viewport;
         AspectRatioPolicy _aspectRatioPolicy;
 
         void fixAspectRatio();

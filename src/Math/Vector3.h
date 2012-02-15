@@ -1,7 +1,7 @@
 #ifndef Magnum_Math_Vector3_h
 #define Magnum_Math_Vector3_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -23,7 +23,7 @@
 
 namespace Magnum { namespace Math {
 
-/** @brief Vector (three-component) */
+/** @brief Three-component vector */
 template<class T> class Vector3: public Vector<T, 3> {
     public:
         /** @brief Unit vector in direction of X axis */
@@ -61,6 +61,15 @@ template<class T> class Vector3: public Vector<T, 3> {
             setX(x); setY(y); setZ(z);
         }
 
+        /**
+         * @brief Constructor
+         * @param other     Two component vector
+         * @param z         Z / B value
+         */
+        inline Vector3(const Vector<T, 2>& other, T z = T(0)) {
+            setX(other[0]); setY(other[1]); setZ(z);
+        }
+
         inline T x() const { return Vector<T, 3>::at(0); } /**< @brief X component */
         inline T y() const { return Vector<T, 3>::at(1); } /**< @brief Y component */
         inline T z() const { return Vector<T, 3>::at(2); } /**< @brief Z component */
@@ -80,10 +89,10 @@ template<class T> class Vector3: public Vector<T, 3> {
         /** @copydoc Vector::operator=() */
         inline Vector3<T>& operator=(const Vector<T, 3>& other) { return Vector<T, 3>::operator=(other); }
 
-        /** @copydoc Vector::operator*(const Vector<T, size>&) */
+        /** @copydoc Vector::operator*(const Vector<T, size>&) const */
         inline T operator*(const Vector<T, 3>& other) const { return Vector<T, 3>::operator*(other); }
 
-        /** @copydoc Vector::operator*(T) */
+        /** @copydoc Vector::operator*(T) const */
         inline Vector3<T> operator*(T number) const { return Vector<T, 3>::operator*(number); }
 
         /** @copydoc Vector::operator/() */
@@ -92,7 +101,7 @@ template<class T> class Vector3: public Vector<T, 3> {
         /** @copydoc Vector::operator+() */
         inline Vector3<T> operator+(const Vector<T, 3>& other) const { return Vector<T, 3>::operator+(other); }
 
-        /** @copydoc Vector::operator-(const Vector<T, size>&) */
+        /** @copydoc Vector::operator-(const Vector<T, size>&) const */
         inline Vector3<T> operator-(const Vector<T, 3>& other) const { return Vector<T, 3>::operator-(other); }
 
         /** @copydoc Vector::operator-() */
@@ -103,7 +112,7 @@ template<class T> class Vector3: public Vector<T, 3> {
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<class T> Corrade::Utility::Debug& operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Vector3<T>& value) {
+template<class T> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Vector3<T>& value) {
     return debug << static_cast<const Magnum::Math::Vector<T, 3>&>(value);
 }
 #endif

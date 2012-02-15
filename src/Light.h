@@ -1,7 +1,7 @@
 #ifndef Magnum_Light_h
 #define Magnum_Light_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -34,10 +34,10 @@ class Light: public Object {
          * @brief Constructor
          * @param parent        Parent object
          */
-        inline Light(Object* parent = 0): Object(parent) {}
+        inline Light(Object* parent = nullptr): Object(parent) {}
 
         /**
-         * @brief Light position relative to the camera
+         * @brief Light position relative to root object (scene)
          */
         inline Vector3 position() {
             setClean();
@@ -47,11 +47,7 @@ class Light: public Object {
         /**
          * Recomputes light position.
          */
-        inline virtual void setClean() {
-            if(!isDirty()) return;
-            _position = transformation(true).at(3).xyz();
-            Object::setClean();
-        }
+        virtual void setClean();
 
     private:
         Vector3 _position;

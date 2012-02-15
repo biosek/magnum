@@ -1,7 +1,7 @@
 #ifndef Magnum_Shader_h
 #define Magnum_Shader_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -27,23 +27,19 @@
 namespace Magnum {
 
 /**
- * @brief Shader
+ * @brief %Shader
  *
  * Allows loading and compiling the shader from file or directly from source
  * string. Compiled shaders are then passed to AbstractShaderProgram subclasses
  * for linking and usage.
  */
-class Shader {
-    DISABLE_COPY(Shader)
+class MAGNUM_EXPORT Shader {
+    Shader(const Shader& other) = delete;
+    Shader(Shader&& other) = delete;
+    Shader& operator=(const Shader& other) = delete;
+    Shader& operator=(Shader&& other) = delete;
 
     public:
-        /** @brief Logging level */
-        enum LogLevel {
-            None,       /**< @brief Don't display anything */
-            Errors,     /**< @brief Display only errors */
-            Warnings    /**< @brief Display only errors and warnings */
-        };
-
         /** @brief Shader type */
         enum Type {
             Vertex = GL_VERTEX_SHADER,      /**< @brief Vertex shader */
@@ -57,16 +53,6 @@ class Shader {
             Compiled,       /**< @brief Shader is compiled */
             Failed          /**< @brief Compilation failed */
         };
-
-        /**
-         * @brief Log level
-         *
-         * Log level for displaying compilation messages.
-         */
-        inline static LogLevel logLevel() { return _logLevel; }
-
-        /** @brief Set log level */
-        inline static void setLogLevel(LogLevel level) { _logLevel = level; }
 
         /**
          * @brief Load shader from source
@@ -106,7 +92,7 @@ class Shader {
             Shader* s = new Shader(type);
             if(!s->addFile(filename)) {
                 delete s;
-                return 0;
+                return nullptr;
             }
 
             return s;
@@ -176,8 +162,6 @@ class Shader {
         GLuint compile();
 
     private:
-        static LogLevel _logLevel;
-
         Type _type;
         State _state;
 

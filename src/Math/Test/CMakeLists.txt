@@ -1,3 +1,5 @@
+corrade_add_test(TypeTraitsTest TypeTraitsTest.h TypeTraitsTest.cpp)
+
 corrade_add_test(VectorTest VectorTest.h VectorTest.cpp)
 target_link_libraries(VectorTest ${CORRADE_UTILITY_LIBRARY})
 corrade_add_test(Vector2Test Vector2Test.h Vector2Test.cpp)
@@ -14,4 +16,6 @@ target_link_libraries(Matrix3Test ${CORRADE_UTILITY_LIBRARY})
 corrade_add_test(Matrix4Test Matrix4Test.h Matrix4Test.cpp)
 target_link_libraries(Matrix4Test ${CORRADE_UTILITY_LIBRARY})
 
+corrade_add_test(MathTest MathTest.h MathTest.cpp)
+target_link_libraries(MathTest MagnumMath)
 corrade_add_test(GeometryUtilsTest GeometryUtilsTest.h GeometryUtilsTest.cpp)

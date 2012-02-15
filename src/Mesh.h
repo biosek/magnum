@@ -1,7 +1,7 @@
 #ifndef Magnum_Mesh_h
 #define Magnum_Mesh_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -24,6 +24,7 @@
 #include <set>
 
 #include "Magnum.h"
+#include "TypeTraits.h"
 
 namespace Magnum {
 
@@ -35,8 +36,11 @@ class Buffer;
  * @todo Support for normalized values (e.g. for color as char[4] passed to
  *      shader as floating-point vec4)
  */
-class Mesh {
-    DISABLE_COPY(Mesh)
+class MAGNUM_EXPORT Mesh {
+    Mesh(const Mesh& other) = delete;
+    Mesh(Mesh&& other) = delete;
+    Mesh& operator=(const Mesh& other) = delete;
+    Mesh& operator=(Mesh&& other) = delete;
 
     public:
         /** @brief Primitive type */
@@ -79,6 +83,15 @@ class Mesh {
              */
             TriangleFan = GL_TRIANGLE_FAN
         };
+
+        /**
+         * @brief Implicit constructor
+         *
+         * Allows creating the object without knowing anything about mesh data.
+         * Note that you have to call setPrimitive() and setVertexCount()
+         * manually for mesh to draw properly.
+         */
+        inline Mesh(): _primitive(Triangles), _vertexCount(0), finalized(false) {}
 
         /**
          * @brief Constructor
@@ -143,7 +156,9 @@ class Mesh {
          * initialized with addBuffer) or the mesh was already drawn, the
          * function does nothing.
          */
-        template<class T> void bindAttribute(Buffer* buffer, GLuint attribute);
+        template<class T> inline void bindAttribute(Buffer* buffer, GLuint attribute) {
+            bindAttribute(buffer, attribute, TypeTraits<T>::count(), TypeTraits<T>::glType());
+        }
 
         /**
          * @brief Draw the mesh
@@ -206,50 +221,6 @@ class Mesh {
 
         GLsizei sizeOf(GLenum type);
 };
-
-template<> inline void Mesh::bindAttribute<GLbyte>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_BYTE);
-}
-
-template<> inline void Mesh::bindAttribute<GLubyte>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_UNSIGNED_BYTE);
-}
-
-template<> inline void Mesh::bindAttribute<GLshort>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_SHORT);
-}
-
-template<> inline void Mesh::bindAttribute<GLushort>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_UNSIGNED_SHORT);
-}
-
-template<> inline void Mesh::bindAttribute<GLint>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_INT);
-}
-
-template<> inline void Mesh::bindAttribute<GLuint>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_UNSIGNED_INT);
-}
-
-template<> inline void Mesh::bindAttribute<GLfloat>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_FLOAT);
-}
-
-template<> inline void Mesh::bindAttribute<GLdouble>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 1, GL_DOUBLE);
-}
-
-template<> inline void Mesh::bindAttribute<Vector2>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 2, GL_FLOAT);
-}
-
-template<> inline void Mesh::bindAttribute<Vector3>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 3, GL_FLOAT);
-}
-
-template<> inline void Mesh::bindAttribute<Vector4>(Buffer* buffer, GLuint attribute) {
-    bindAttribute(buffer, attribute, 4, GL_FLOAT);
-}
 
 }
 

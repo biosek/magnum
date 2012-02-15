@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -19,6 +19,7 @@
 #include <QtTest/QTest>
 
 #include "Vector.h"
+#include "Math.h"
 
 QTEST_APPLESS_MAIN(Magnum::Math::Test::VectorTest)
 
@@ -140,6 +141,10 @@ void VectorTest::debug() {
     ostringstream o;
     Debug(&o) << Vector4(vec);
     QCOMPARE(QString::fromStdString(o.str()), QString("Vector(0.5, 15, 1, 1)\n"));
+
+    o.str("");
+    Debug(&o) << "a" << Vector4() << "b" << Vector4();
+    QCOMPARE(QString::fromStdString(o.str()), QString("a Vector(0, 0, 0, 0) b Vector(0, 0, 0, 0)\n"));
 }
 
 }}}

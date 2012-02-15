@@ -1,7 +1,7 @@
 #ifndef Magnum_IndexedMesh_h
 #define Magnum_IndexedMesh_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -27,10 +27,18 @@ namespace Magnum {
 /**
  * @brief Indexed mesh
  */
-class IndexedMesh: public Mesh {
-    DISABLE_COPY(IndexedMesh)
-
+class MAGNUM_EXPORT IndexedMesh: public Mesh {
     public:
+        /**
+         * @brief Implicit constructor
+         *
+         * Allows creating the object without knowing anything about mesh data.
+         * Note that you have to call setPrimitive(), setVertexCount(),
+         * setIndexCount() and setIndexType() manually for mesh to draw
+         * properly.
+         */
+        inline IndexedMesh(): _indexBuffer(Buffer::ElementArrayBuffer), _indexCount(0), _indexType(GL_UNSIGNED_SHORT) {}
+
         /**
          * @brief Constructor
          * @param primitive     Primitive type

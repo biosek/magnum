@@ -1,7 +1,7 @@
 #ifndef Magnum_Magnum_h
 #define Magnum_Magnum_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -21,9 +21,16 @@
 
 #include <GL/glew.h>
 
+#include "Math/Math.h"
 #include "Math/Matrix4.h"
 #include "Math/Vector2.h"
 
+/**
+ * @brief Root namespace
+ *
+ * Contains classes needed for building meshes, setting up and rendering the
+ * scene.
+ */
 namespace Magnum {
 
 /** @brief Two-component floating-point vector */

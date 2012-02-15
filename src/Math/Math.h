@@ -1,7 +1,7 @@
-#ifndef Magnum_Math_constants_h
-#define Magnum_Math_constants_h
+#ifndef Magnum_Math_Math_h
+#define Magnum_Math_Math_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -15,17 +15,45 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
+#include <cstddef>
+
+#include "utilities.h"
+
 /** @file
- * @brief Constants
+ * @brief Math constants and utilities
  */
 
-namespace Magnum { namespace Math {
+namespace Magnum {
+
+/**
+ * @brief %Math library
+ *
+ * Template classes for matrix and vector calculations.
+*/
+namespace Math {
 
 /** @brief Pi */
 #define PI 3.1415926535
 
-/** @brief Maximal tolerance when comparing floats */
-#define EPSILON 1.0e-6
+/**
+ * @brief Integral power
+ *
+ * Returns integral power of base to the exponent.
+ */
+template<size_t exponent> inline constexpr size_t pow(size_t base) {
+    return base*pow<exponent-1>(base);
+}
+
+#ifndef DOXYGEN_GENERATING_OUTPUT
+template<> inline constexpr size_t pow<0>(size_t base) { return 1; }
+#endif
+
+/**
+ * @brief Integral logarithm
+ *
+ * Returns integral logarithm of given number with given base.
+ */
+size_t MAGNUM_EXPORT log(size_t base, size_t number);
 
 /**
  * @brief Angle in degrees

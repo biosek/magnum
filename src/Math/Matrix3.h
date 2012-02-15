@@ -1,7 +1,7 @@
 #ifndef Magnum_Math_Matrix3_h
 #define Magnum_Math_Matrix3_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -24,7 +24,7 @@
 
 namespace Magnum { namespace Math {
 
-/** @brief Matrix 3x3 */
+/** @brief 3x3 matrix */
 template<class T> class Matrix3: public Matrix<T, 3> {
     public:
         /** @copydoc Matrix::Matrix(bool) */
@@ -39,16 +39,16 @@ template<class T> class Matrix3: public Matrix<T, 3> {
         /** @copydoc Matrix::operator=() */
         inline Matrix3<T>& operator=(const Matrix<T, 3>& other) { return Matrix<T, 3>::operator=(other); }
 
-        /** @copydoc Matrix::at(size_t) */
+        /** @copydoc Matrix::at(size_t) const */
         inline Vector3<T> at(size_t col) const { return Matrix<T, 3>::at(col); }
 
-        /** @copydoc Matrix::at(size_t, size_t) */
+        /** @copydoc Matrix::at(size_t, size_t) const */
         inline T at(size_t row, size_t col) const { return Matrix<T, 3>::at(row, col); }
 
-        /** @copydoc Matrix::operator*(const Matrix<T, size>&) */
+        /** @copydoc Matrix::operator*(const Matrix<T, size>&) const */
         inline Matrix3<T> operator*(const Matrix<T, 3>& other) const { return Matrix<T, 3>::operator*(other); }
 
-        /** @copydoc Matrix::operator*(const Vector<T, size>&) */
+        /** @copydoc Matrix::operator*(const Vector<T, size>&) const */
         inline Vector3<T> operator*(const Vector<T, 3>& other) const { return Matrix<T, 3>::operator*(other); }
 
         /** @copydoc Matrix::transposed() */
@@ -59,7 +59,7 @@ template<class T> class Matrix3: public Matrix<T, 3> {
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<class T> Corrade::Utility::Debug& operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix3<T>& value) {
+template<class T> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix3<T>& value) {
     return debug << static_cast<const Magnum::Math::Matrix<T, 3>&>(value);
 }
 #endif

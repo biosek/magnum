@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -19,7 +19,7 @@
 #include <QtTest/QTest>
 
 #include "Matrix4.h"
-#include "constants.h"
+#include "Math.h"
 
 QTEST_APPLESS_MAIN(Magnum::Math::Test::Matrix4Test)
 

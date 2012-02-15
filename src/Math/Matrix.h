@@ -1,7 +1,7 @@
 #ifndef Magnum_Math_Matrix_h
 #define Magnum_Math_Matrix_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -24,7 +24,7 @@
 namespace Magnum { namespace Math {
 
 /**
- * @brief Matrix
+ * @brief %Matrix
  *
  * @todo @c PERFORMANCE - implicit sharing
  * @todo @c PERFORMANCE - loop unrolling for Matrix<T, 3> and Matrix<T, 4>
@@ -102,10 +102,9 @@ template<class T, size_t size> class Matrix {
 
         /** @brief Equality operator */
         inline bool operator==(const Matrix<T, size>& other) const {
-            /** @bug NaN comparisons! */
             for(size_t row = 0; row != size; ++row) {
                 for(size_t col = 0; col != size; ++col)
-                    if(std::abs(at(row, col) - other.at(row, col)) >= EPSILON) return false;
+                    if(!TypeTraits<T>::equals(at(row, col), other.at(row, col))) return false;
             }
 
             return true;
@@ -232,9 +231,9 @@ template<class T> class Matrix<T, 2> {
 #endif
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<class T, size_t size> Corrade::Utility::Debug& operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix<T, size>& value) {
-    debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, false);
+template<class T, size_t size> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix<T, size>& value) {
     debug << "Matrix(";
+    debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, false);
     for(size_t row = 0; row != size; ++row) {
         if(row != 0) debug << ",\n       ";
         for(size_t col = 0; col != size; ++col) {
@@ -242,7 +241,9 @@ template<class T, size_t size> Corrade::Utility::Debug& operator<<(Corrade::Util
             debug << value.at(row, col);
         }
     }
-    return debug << ')';
+    debug << ')';
+    debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, true);
+    return debug;
 }
 #endif
 

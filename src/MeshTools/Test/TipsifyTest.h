@@ -1,7 +1,7 @@
-#ifndef Magnum_Test_MeshBuilderBenchmark_h
-#define Magnum_Test_MeshBuilderBenchmark_h
+#ifndef Magnum_MeshTools_Test_TipsifyTest_h
+#define Magnum_MeshTools_Test_TipsifyTest_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -17,23 +17,24 @@
 
 #include <QtCore/QObject>
 
-#include "Magnum.h"
+#include "MeshBuilder.h"
 
-namespace Magnum { namespace Test {
+namespace Magnum { namespace MeshTools { namespace Test {
 
-class MeshBuilderBenchmark: public QObject {
+class TipsifyTest: public QObject {
     Q_OBJECT
 
+    public:
+        explicit TipsifyTest(QObject* parent = nullptr);
+
     private slots:
-        void subdivide();
-        void subdivideAndCleanMeshAfter();
-        void subdivideAndCleanMeshBetween();
+        void buildAdjacency();
+        void tipsify();
 
     private:
-        static inline Magnum::Vector4 interpolator(const Magnum::Vector4& a, const Magnum::Vector4& b) {
-            return (a+b).xyz().normalized();
-        }
+        MeshBuilder<unsigned int> builder;
 };
 
-}}
+}}}
+
 #endif

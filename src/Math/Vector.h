@@ -1,7 +1,7 @@
 #ifndef Magnum_Math_Vector_h
 #define Magnum_Math_Vector_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -23,15 +23,15 @@
 #include <cmath>
 
 #include "Utility/Debug.h"
-#include "constants.h"
+#include "TypeTraits.h"
 
 namespace Magnum { namespace Math {
 
-/** @brief Vector */
+/** @brief %Vector */
 template<class T, size_t size> class Vector {
     public:
-        typedef T Type;
-        const static size_t Size = size;
+        typedef T Type;                     /**< @brief Vector data type */
+        const static size_t Size = size;    /**< @brief Vector size */
 
         /** @brief Angle between vectors */
         inline static T angle(const Vector<T, size>& a, const Vector<T, size>& b) {
@@ -91,9 +91,8 @@ template<class T, size_t size> class Vector {
 
         /** @brief Equality operator */
         inline bool operator==(const Vector<T, size>& other) const {
-            /** @bug NaN comparisons! */
             for(size_t pos = 0; pos != size; ++pos)
-                if(std::abs(at(pos) - other.at(pos)) >= EPSILON) return false;
+                if(!TypeTraits<T>::equals(at(pos), other.at(pos))) return false;
 
             return true;
         }
@@ -178,14 +177,16 @@ template<class T, size_t size> class Vector {
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<class T, size_t size> Corrade::Utility::Debug& operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Vector<T, size>& value) {
-    debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, false);
+template<class T, size_t size> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Vector<T, size>& value) {
     debug << "Vector(";
+    debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, false);
     for(size_t i = 0; i != size; ++i) {
         if(i != 0) debug << ", ";
         debug << value.at(i);
     }
-    return debug << ')';
+    debug << ')';
+    debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, true);
+    return debug;
 }
 #endif
 

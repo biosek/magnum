@@ -1,7 +1,7 @@
 #ifndef Magnum_Object_h
 #define Magnum_Object_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -26,6 +26,7 @@
 namespace Magnum {
 
 class Scene;
+class Camera;
 
 /**
  * @brief Base for all positioned objects
@@ -33,8 +34,11 @@ class Scene;
  * @todo Transform transformation when changing parent, so the object stays in
  * place.
  */
-class Object {
-    DISABLE_COPY(Object)
+class MAGNUM_EXPORT Object {
+    Object(const Object& other) = delete;
+    Object(Object&& other) = delete;
+    Object& operator=(const Object& other) = delete;
+    Object& operator=(Object&& other) = delete;
 
     friend class Scene;
 
@@ -45,7 +49,7 @@ class Object {
          *
          * Sets all transformations to their default values.
          */
-        inline Object(Object* parent = 0): _parent(0), dirty(true) {
+        inline Object(Object* parent = nullptr): _parent(nullptr), dirty(true) {
             setParent(parent);
         }
 
@@ -59,7 +63,7 @@ class Object {
 
         /**
          * @brief Scene
-         * @return If the object is not assigned to any scene, returns 0.
+         * @return If the object is not assigned to any scene, returns nullptr.
          */
         Scene* scene() const;
 
@@ -70,19 +74,26 @@ class Object {
         inline const std::set<Object*>& children() const { return _children; }
 
         /** @brief Set parent object */
-        virtual void setParent(Object* parent);
+        void setParent(Object* parent);
 
         /**
          * @brief Transformation matrix
          *
-         * If the object is part of an scene and @c absolute is set to true,
-         * returns absolute transformation matrix (thus relative to actual
-         * camera), if the object is not part of an scene, returns
-         * transformation matrix composed of all matrices of parent objects.
-         * If @c absolute is set to false, returns transformation matrix
-         * relative to parent.
+         * @return Transformation matrix relative to parent.
          */
-        virtual Matrix4 transformation(bool absolute = false);
+        inline Matrix4 transformation() const {
+            return _transformation;
+        }
+
+        /**
+         * @brief Absolute transformation matrix
+         *
+         * If both this object and the camera is part of the same scene,
+         * returns absolute transformation matrix (relative to the camera).
+         * Otherwise returns transformation matrix relative to root object
+         * (in most cases this object's scene).
+         */
+        virtual Matrix4 absoluteTransformation(Camera* camera = nullptr);
 
         /** @brief Set transformation matrix */
         inline void setTransformation(const Matrix4& transformation) {
@@ -100,8 +111,7 @@ class Object {
          * Multiplies current transformation matrix by new matrix.
          */
         inline void multiplyTransformation(const Matrix4& transformation, bool global = true) {
-            _transformation = global ? transformation*_transformation : _transformation*transformation;
-            setDirty();
+            setTransformation(global ? transformation*_transformation : _transformation*transformation);
         }
 
         /**
@@ -189,7 +199,7 @@ class Object {
          *
          * Recursively calls setDirty() on every child. If the object is already
          * marked as dirty, the function does nothing.
-         * @attention Reimplementations must also call this function!
+         * @attention Reimplementations must call also this function!
          */
         virtual void setDirty();
 
@@ -199,7 +209,7 @@ class Object {
          * Recursively calls setClean() on every parent. Default implementation
          * only marks the object as clean, but if the object does any caching,
          * this function should be reimplemented to regenerate the cache.
-         * @attention Reimplementations must also call this function!
+         * @attention Reimplementations must call also this function!
          */
         virtual void setClean();
 
@@ -207,10 +217,14 @@ class Object {
 
         /**
          * @brief Draw object
+         * @param transformationMatrix      %Matrix specifying object
+         *      transformation relative to the scene.
+         * @param camera                    Active camera (containing
+         *      projection matrix)
          *
          * Default implementation does nothing.
          */
-        virtual void draw(const Matrix4& transformationMatrix, const Matrix4& projectionMatrix) {}
+        virtual void draw(const Matrix4& transformationMatrix, Camera* camera) {}
 
     private:
         Object* _parent;

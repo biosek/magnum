@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -24,11 +24,11 @@ void Object::setParent(Object* parent) {
     if(_parent == parent) return;
 
     /* Set new parent and add the object to new parent children list */
-    if(parent != 0) {
+    if(parent != nullptr) {
 
         /* Only Fry can be his own grandfather */
         Object* p = parent;
-        while(p != 0 && p->parent() != p) {
+        while(p != nullptr && p->parent() != p) {
             if(p == this) return;
             p = p->parent();
         }
@@ -37,7 +37,7 @@ void Object::setParent(Object* parent) {
     }
 
     /* Remove the object from old parent children list */
-    if(_parent != 0)
+    if(_parent != nullptr)
         _parent->_children.erase(this);
 
     _parent = parent;
@@ -45,19 +45,20 @@ void Object::setParent(Object* parent) {
     setDirty();
 }
 
-Matrix4 Object::transformation(bool absolute) {
-    if(!absolute) return _transformation;
-
+Matrix4 Object::absoluteTransformation(Camera* camera) {
     Matrix4 t = _transformation;
 
+    /* Shortcut for absolute transformation of camera relative to itself */
+    if(camera == this) return Matrix4();
+
     Object* p = parent();
-    while(p != 0) {
+    while(p != nullptr) {
         t = p->transformation()*t;
 
         /* We got to the scene, multiply with camera matrix */
         if(p->parent() == p) {
-            Camera* camera = static_cast<Scene*>(p)->camera();
-            if(camera && camera != this) t = camera->cameraMatrix()*t;
+            if(camera && camera->scene() == scene())
+                t = camera->cameraMatrix()*t;
 
             break;
         }
@@ -70,23 +71,23 @@ Matrix4 Object::transformation(bool absolute) {
 
 Object::~Object() {
     /* Remove the object from parent's children */
-    setParent(0);
+    setParent(nullptr);
 
     /* Delete all children */
-    for(set<Object*>::const_iterator it = _children.begin(); it != _children.end(); ++it)
-        delete *it;
+    while(!_children.empty())
+        delete *_children.begin();
 }
 
 Scene* Object::scene() const {
     /* Goes up the family tree until it finds object which is parent of itself
        (that's the scene) */
     Object* p = parent();
-    while(p != 0) {
+    while(p != nullptr) {
         if(p->parent() == p) return static_cast<Scene*>(p);
         p = p->parent();
     }
 
-    return 0;
+    return nullptr;
 }
 
 void Object::setDirty() {
@@ -107,7 +108,7 @@ void Object::setClean() {
     dirty = false;
 
     /* Make all parents clean */
-    if(_parent != 0 && _parent != this) _parent->setClean();
+    if(_parent != nullptr && _parent != this) _parent->setClean();
 }
 
 }

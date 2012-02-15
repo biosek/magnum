@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -133,7 +133,7 @@ void Mesh::bindAttribute(Buffer* buffer, GLuint attribute, GLint size, GLenum ty
     a.size = size;
     a.type = type;
     a.stride = 0;
-    a.pointer = 0;
+    a.pointer = nullptr;
 
     found->second.second.push_back(a);
     _attributes.insert(attribute);

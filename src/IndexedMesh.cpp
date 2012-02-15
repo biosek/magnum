@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -53,7 +53,7 @@ void IndexedMesh::draw() {
 
     /* Bind index array, draw the elements and unbind */
     _indexBuffer.bind();
-    glDrawElements(primitive(), _indexCount, _indexType, 0);
+    glDrawElements(primitive(), _indexCount, _indexType, nullptr);
     _indexBuffer.unbind();
 
     /* Disable vertex arrays for all attributes */

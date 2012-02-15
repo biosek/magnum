@@ -1,7 +1,7 @@
 #ifndef Magnum_AbstractShaderProgram_h
 #define Magnum_AbstractShaderProgram_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -22,6 +22,7 @@
 #include <map>
 
 #include "Shader.h"
+#include "Texture.h"
 
 namespace Magnum {
 
@@ -76,27 +77,13 @@ Basic workflow with AbstractShaderProgram subclasses is: instancing the class
 (once at the beginning), then in every frame calling use(), setting uniforms
 and calling Mesh::draw() (see its documentation for more).
  */
-class AbstractShaderProgram {
-    DISABLE_COPY(AbstractShaderProgram)
+class MAGNUM_EXPORT AbstractShaderProgram {
+    AbstractShaderProgram(const AbstractShaderProgram& other) = delete;
+    AbstractShaderProgram(AbstractShaderProgram&& other) = delete;
+    AbstractShaderProgram& operator=(const AbstractShaderProgram& other) = delete;
+    AbstractShaderProgram& operator=(AbstractShaderProgram&& other) = delete;
 
     public:
-        /** @brief Logging level */
-        enum LogLevel {
-            None,       /**< @brief Don't display anything */
-            Errors,     /**< @brief Display only errors */
-            Warnings    /**< @brief Display only errors and warnings */
-        };
-
-        /**
-         * @brief Log level
-         *
-         * Log level for displaying compilation messages. Default is Errors.
-         */
-        inline static LogLevel logLevel() { return _logLevel; }
-
-        /** @brief Set log level */
-        inline static void setLogLevel(LogLevel level) { _logLevel = level; }
-
         /** @brief Default constructor */
         AbstractShaderProgram();
 
@@ -197,14 +184,17 @@ class AbstractShaderProgram {
             glUniformMatrix4fv(location, 1, GL_FALSE, value.data());
         }
 
+        /** @copydoc setUniform(GLint, GLint) */
+        void setUniform(GLint location, const AbstractTexture* value) {
+            setUniform(location, value->layer());
+        }
+
     private:
         enum State {
             Initialized,
             Linked,
             Failed
         };
-
-        static LogLevel _logLevel;
 
         GLuint program;
         State state;

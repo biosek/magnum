@@ -1,7 +1,7 @@
 #ifndef Magnum_Scene_h
 #define Magnum_Scene_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -23,16 +23,19 @@
 
 namespace Magnum {
 
-/** @brief Scene */
-class Scene: public Object {
+/** @brief %Scene */
+class MAGNUM_EXPORT Scene: public Object {
     private:
-        virtual void setParent(Object* parent) {}
-        Object::setTransformation;
-        Object::multiplyTransformation;
-        Object::setTransformationFrom;
-        Object::translate;
-        Object::scale;
-        Object::rotate;
+        void setParent(Object* parent) = delete;
+        void setTransformation(const Matrix4& transformation) = delete;
+        void multiplyTransformation(const Matrix4& transformation, bool global = true) = delete;
+        void setTransformationFrom(Object* another) = delete;
+        void translate(Vector3 vec, bool global = true) = delete;
+        void translate(GLfloat x, GLfloat y, GLfloat z, bool global = true) = delete;
+        void scale(Vector3 vec, bool global = true) = delete;
+        void scale(GLfloat x, GLfloat y, GLfloat z, bool global = true) = delete;
+        void rotate(GLfloat angle, Vector3 vec, bool global = true) = delete;
+        void rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z, bool global = true) = delete;
 
     public:
         /** @brief Features */
@@ -42,17 +45,25 @@ class Scene: public Object {
             FaceCulling     = 0x04  /**< @brief Face culling */
         };
 
-        /** @brief Constructor */
+        /**
+         * @brief Constructor
+         *
+         * Creates one default vertex array.
+         */
         Scene();
+
+        /**
+         * @brief Destructor
+         *
+         * Deletes the default vertex array.
+         */
+        inline ~Scene() { glDeleteVertexArrays(1, &vao); }
 
         /** @brief Clear color */
         inline Vector4 clearColor() const { return _clearColor; }
 
         /** @brief Which features are set */
         inline unsigned int features() const { return _features; }
-
-        /** @brief Camera */
-        inline Camera* camera() const { return _camera; }
 
         /** @brief Set feature */
         void setFeature(Feature feature, bool enabled);
@@ -66,39 +77,19 @@ class Scene: public Object {
         }
 
         /**
-         * @brief Set viewport size
-         *
-         * Just passes the values to active camera.
-         */
-        inline void setViewport(int width, int height) {
-            if(_camera) _camera->setViewport(width, height);
-        }
-
-        /**
-         * @brief Set camera
-         *
-         * If the camera is not part of the scene, the function does nothing.
-         */
-        void setCamera(Camera* camera);
-
-        /**
          * @brief Draw whole scene
          *
-         * Recursively draws all child objects. If no camera is available, does
-         * nothing.
+         * Recursively draws all child objects with given camera.
          */
-        virtual void draw();
+        virtual void draw(Camera* camera);
 
     private:
         unsigned int _features;
         Vector4 _clearColor;
-        Camera* _camera;
         GLuint vao;
 
-        unsigned int viewportWidth, viewportHeight;
-
-        inline virtual void draw(const Magnum::Matrix4& transformationMatrix, const Magnum::Matrix4& projectionMatrix) {}
-        void drawChildren(Object* object, const Matrix4& transformationMatrix);
+        inline virtual void draw(const Magnum::Matrix4& transformationMatrix, Camera* camera) {}
+        void drawChildren(Object* object, const Matrix4& transformationMatrix, Camera* camera);
 };
 
 }

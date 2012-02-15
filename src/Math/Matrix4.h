@@ -1,7 +1,7 @@
 #ifndef Magnum_Math_Matrix4_h
 #define Magnum_Math_Matrix4_h
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -25,7 +25,7 @@
 namespace Magnum { namespace Math {
 
 /**
- * @brief Matrix 4x4
+ * @brief 4x4 matrix
  *
  * @todo @c PERFORMANCE - make (T,T,T) - (Vec3&lt;T&gt;) alternatives calling
  *      direction based on statistics, which is used more frequently
@@ -139,16 +139,16 @@ template<class T> class Matrix4: public Matrix<T, 4> {
         /** @copydoc Matrix::operator=() */
         inline Matrix4<T>& operator=(const Matrix<T, 4>& other) { return Matrix<T, 4>::operator=(other); }
 
-        /** @copydoc Matrix::at(size_t) */
+        /** @copydoc Matrix::at(size_t) const */
         inline Vector4<T> at(size_t col) const { return Matrix<T, 4>::at(col); }
 
-        /** @copydoc Matrix::at(size_t, size_t) */
+        /** @copydoc Matrix::at(size_t, size_t) const */
         inline T at(size_t row, size_t col) const { return Matrix<T, 4>::at(row, col); }
 
-        /** @copydoc Matrix::operator*(const Matrix<T, size>&) */
+        /** @copydoc Matrix::operator*(const Matrix<T, size>&) const */
         inline Matrix4<T> operator*(const Matrix<T, 4>& other) const { return Matrix<T, 4>::operator*(other); }
 
-        /** @copydoc Matrix::operator*(const Vector<T, size>&) */
+        /** @copydoc Matrix::operator*(const Vector<T, size>&) const */
         inline Vector4<T> operator*(const Vector<T, 4>& other) const { return Matrix<T, 4>::operator*(other); }
 
         /** @copydoc Matrix::transposed() */
@@ -162,7 +162,7 @@ template<class T> class Matrix4: public Matrix<T, 4> {
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-template<class T> Corrade::Utility::Debug& operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix4<T>& value) {
+template<class T> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix4<T>& value) {
     return debug << static_cast<const Magnum::Math::Matrix<T, 4>&>(value);
 }
 #endif

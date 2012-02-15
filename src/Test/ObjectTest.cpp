@@ -1,5 +1,5 @@
 /*
-    Copyright © 2010, 2011 Vladimír Vondruš <mosra@centrum.cz>
+    Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
     This file is part of Magnum.
 
@@ -37,7 +37,7 @@ void ObjectTest::parenting() {
 
     /* In fact, cyclic dependencies are not allowed at all */
     root.setParent(childTwo);
-    QVERIFY(root.parent() == 0);
+    QVERIFY(root.parent() == nullptr);
 
     /* Reparent to another */
     childTwo->setParent(childOne);
@@ -55,11 +55,11 @@ void ObjectTest::scene() {
     Object* childOne = new Object(&scene);
     Object* childTwo = new Object(childOne);
 
-    Object* orphan = new Object;
-    Object* childOfOrphan = new Object(orphan);
+    Object orphan;
+    Object* childOfOrphan = new Object(&orphan);
 
     QVERIFY(childTwo->scene() == &scene);
-    QVERIFY(childOfOrphan->scene() == 0);
+    QVERIFY(childOfOrphan->scene() == nullptr);
 }
 
 void ObjectTest::dirty() {
@@ -83,20 +83,6 @@ void ObjectTest::dirty() {
     childTwo->setDirty();
     QVERIFY(childTwo->isDirty());
     QVERIFY(childThree->isDirty());
-
-    /* Set camera, makes everything dirty except path from camera to scene */
-    Camera* camera = new Camera(&scene);
-    scene.setCamera(camera);
-    QVERIFY(childOne->isDirty());
-    QVERIFY(!camera->isDirty());
-    QVERIFY(!scene.isDirty());
-
-    /* Clean up and try to move the camera -> makes all dirty (except path
-       from camera to scene) */
-    childThree->setClean();
-    QVERIFY(!scene.isDirty());
-    camera->translate(0, 0, 1);
-    QVERIFY(childOne->isDirty());
 }
 
 }}
