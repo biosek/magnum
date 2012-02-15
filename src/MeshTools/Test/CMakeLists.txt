@@ -1,3 +1,5 @@
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-zero-as-null-pointer-constant")
+
 corrade_add_test(CleanTest CleanTest.h CleanTest.cpp)
 corrade_add_test(SubdivideTest SubdivideTest.h SubdivideTest.cpp)
 corrade_add_test(SubdivideCleanBenchmark SubdivideCleanBenchmark.h SubdivideCleanBenchmark.cpp)

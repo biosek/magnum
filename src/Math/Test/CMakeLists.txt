@@ -1,3 +1,5 @@
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-zero-as-null-pointer-constant")
+
 corrade_add_test(TypeTraitsTest TypeTraitsTest.h TypeTraitsTest.cpp)
 
 corrade_add_test(VectorTest VectorTest.h VectorTest.cpp)
