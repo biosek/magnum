@@ -63,12 +63,18 @@ size_t MAGNUM_EXPORT log(size_t base, size_t number);
  */
 inline constexpr double operator "" _deg(long double value) { return value*PI/180; }
 
+/** @copydoc operator "" _deg(long double) */
+inline constexpr double operator "" _deg(unsigned long long value) { return value*PI/180; }
+
 /**
  * @brief Angle in degrees, converted to float
  *
  * See also operator "" _deg().
  */
 inline constexpr float operator "" _degf(long double value) { return value*PI/180; }
+
+/** @copydoc operator "" _degf(long double) */
+inline constexpr float operator "" _degf(unsigned long long value) { return value*PI/180; }
 
 /**
  * @brief Angle in radians
@@ -77,12 +83,18 @@ inline constexpr float operator "" _degf(long double value) { return value*PI/18
  */
 inline constexpr double operator "" _rad(long double value) { return value; }
 
+/** @copydoc operator "" _rad(long double) */
+inline constexpr double operator "" _rad(unsigned long long value) { return value; }
+
 /**
  * @brief Angle in radians, converted to float
  *
  * See also operator "" _rad().
  */
 inline constexpr float operator "" _radf(long double value) { return value; }
+
+/** @copydoc operator "" _radf(long double) */
+inline constexpr float operator "" _radf(unsigned long long value) { return value; }
 
 }}
 
