@@ -123,7 +123,7 @@ class Buffer {
          * @param target     %Target
          */
         inline static void unbind(Target target) {
-            glBindBuffer(static_cast<GLenum>(target), 0);
+            glBindBuffer(Corrade::Utility::castToUnderlyingType(target), 0);
         }
 
         /**
@@ -164,7 +164,7 @@ class Buffer {
          * @param target     %Target
          */
         inline void bind(Target target) {
-            glBindBuffer(static_cast<GLenum>(target), buffer);
+            glBindBuffer(Corrade::Utility::castToUnderlyingType(target), buffer);
         }
 
         /**
@@ -199,7 +199,7 @@ class Buffer {
          */
         inline void setData(Target target, GLsizeiptr size, const GLvoid* data, Usage usage) {
             bind(target);
-            glBufferData(static_cast<GLenum>(target), size, data, static_cast<GLenum>(usage));
+            glBufferData(Corrade::Utility::castToUnderlyingType(target), size, data, Corrade::Utility::castToUnderlyingType(usage));
         }
 
         /**
@@ -244,7 +244,7 @@ class Buffer {
          */
         inline void setSubData(Target target, GLintptr offset, GLsizeiptr size, const GLvoid* data) {
             bind(target);
-            glBufferSubData(static_cast<GLenum>(target), offset, size, data);
+            glBufferSubData(Corrade::Utility::castToUnderlyingType(target), offset, size, data);
         }
 
         /**

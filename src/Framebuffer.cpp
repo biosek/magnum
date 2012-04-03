@@ -15,12 +15,14 @@
 
 #include "Framebuffer.h"
 
+using namespace Corrade::Utility;
+
 namespace Magnum {
 
 void Framebuffer::mapDefaultForDraw(std::initializer_list<DefaultDrawAttachment> attachments) {
     GLenum* _attachments = new GLenum[attachments.size()];
     for(auto it = attachments.begin(); it != attachments.end(); ++it)
-        _attachments[it-attachments.begin()] = static_cast<GLenum>(*it);
+        _attachments[it-attachments.begin()] = castToUnderlyingType(*it);
 
     bindDefault(Target::Draw);
     glDrawBuffers(attachments.size(), _attachments);
@@ -39,7 +41,7 @@ void Framebuffer::mapForDraw(std::initializer_list<int> colorAttachments) {
 
 void Framebuffer::read(const Math::Vector2<GLint>& offset, const Math::Vector2<GLsizei>& dimensions, AbstractImage::Components components, AbstractImage::ComponentType type, Image2D* image) {
     char* data = new char[AbstractImage::pixelSize(components, type)*dimensions.product()];
-    glReadPixels(offset.x(), offset.y(), dimensions.x(), dimensions.y(), static_cast<GLenum>(components), static_cast<GLenum>(type), data);
+    glReadPixels(offset.x(), offset.y(), dimensions.x(), dimensions.y(), castToUnderlyingType(components), castToUnderlyingType(type), data);
     image->setData(dimensions, components, type, data);
 }
 
@@ -50,7 +52,7 @@ void Framebuffer::read(const Math::Vector2<GLint>& offset, const Math::Vector2<G
         image->setData(dimensions, components, type, nullptr, usage);
 
     image->buffer()->bind(Buffer::Target::PixelPack);
-    glReadPixels(offset.x(), offset.y(), dimensions.x(), dimensions.y(), static_cast<GLenum>(components), static_cast<GLenum>(type), nullptr);
+    glReadPixels(offset.x(), offset.y(), dimensions.x(), dimensions.y(), castToUnderlyingType(components), castToUnderlyingType(type), nullptr);
 }
 
 }

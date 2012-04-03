@@ -101,7 +101,7 @@ class MAGNUM_EXPORT Framebuffer {
          * @param target     %Target
          */
         inline static void bindDefault(Target target) {
-            glBindFramebuffer(static_cast<GLenum>(target), 0);
+            glBindFramebuffer(Corrade::Utility::castToUnderlyingType(target), 0);
         }
 
         /**
@@ -128,7 +128,7 @@ class MAGNUM_EXPORT Framebuffer {
          */
         inline static void mapDefaultForRead(DefaultReadAttachment attachment) {
             bindDefault(Target::Read);
-            glReadBuffer(static_cast<GLenum>(attachment));
+            glReadBuffer(Corrade::Utility::castToUnderlyingType(attachment));
         }
 
         /**
@@ -148,7 +148,7 @@ class MAGNUM_EXPORT Framebuffer {
          * / mapDefaultForDraw(), the data are written to each of them.
          */
         inline static void blit(const Math::Vector2<GLint>& bottomLeft, const Math::Vector2<GLint>& topRight, const Math::Vector2<GLint>& destinationBottomLeft, const Math::Vector2<GLint>& destinationTopRight, BlitMask blitMask, AbstractTexture::Filter filter) {
-            glBlitFramebuffer(bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y(), destinationBottomLeft.x(), destinationBottomLeft.y(), destinationTopRight.x(), destinationTopRight.y(), static_cast<GLbitfield>(blitMask), static_cast<GLenum>(filter));
+            glBlitFramebuffer(bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y(), destinationBottomLeft.x(), destinationBottomLeft.y(), destinationTopRight.x(), destinationTopRight.y(), Corrade::Utility::castToUnderlyingType(blitMask), Corrade::Utility::castToUnderlyingType(filter));
         }
 
         /**
@@ -166,7 +166,7 @@ class MAGNUM_EXPORT Framebuffer {
          * default.
          */
         inline static void blit(const Math::Vector2<GLint>& bottomLeft, const Math::Vector2<GLint>& topRight, BlitMask blitMask) {
-            glBlitFramebuffer(bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y(), bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y(), static_cast<GLbitfield>(blitMask), static_cast<GLenum>(AbstractTexture::Filter::NearestNeighbor));
+            glBlitFramebuffer(bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y(), bottomLeft.x(), bottomLeft.y(), topRight.x(), topRight.y(), Corrade::Utility::castToUnderlyingType(blitMask), Corrade::Utility::castToUnderlyingType(AbstractTexture::Filter::NearestNeighbor));
         }
 
         /**
@@ -206,7 +206,7 @@ class MAGNUM_EXPORT Framebuffer {
 
         /** @brief Bind framebuffer */
         inline void bind(Target target) {
-            glBindFramebuffer(static_cast<GLenum>(target), framebuffer);
+            glBindFramebuffer(Corrade::Utility::castToUnderlyingType(target), framebuffer);
         }
 
         /**
@@ -245,7 +245,7 @@ class MAGNUM_EXPORT Framebuffer {
         inline void attachRenderbuffer(Target target, DepthStencilAttachment depthStencilAttachment, Renderbuffer* renderbuffer) {
             /** @todo Check for internal format compatibility */
             bind(target);
-            glFramebufferRenderbuffer(static_cast<GLenum>(target), static_cast<GLenum>(depthStencilAttachment), GL_RENDERBUFFER, renderbuffer->id());
+            glFramebufferRenderbuffer(Corrade::Utility::castToUnderlyingType(target), Corrade::Utility::castToUnderlyingType(depthStencilAttachment), GL_RENDERBUFFER, renderbuffer->id());
         }
 
         /**
@@ -257,7 +257,7 @@ class MAGNUM_EXPORT Framebuffer {
         inline void attachRenderbuffer(Target target, unsigned int colorAttachment, Renderbuffer* renderbuffer) {
             /** @todo Check for internal format compatibility */
             bind(target);
-            glFramebufferRenderbuffer(static_cast<GLenum>(target), GL_COLOR_ATTACHMENT0 + colorAttachment, GL_RENDERBUFFER, renderbuffer->id());
+            glFramebufferRenderbuffer(Corrade::Utility::castToUnderlyingType(target), GL_COLOR_ATTACHMENT0 + colorAttachment, GL_RENDERBUFFER, renderbuffer->id());
         }
 
         /**
@@ -271,7 +271,7 @@ class MAGNUM_EXPORT Framebuffer {
             /** @todo Check for internal format compatibility */
             /** @todo Check for texture target compatibility */
             bind(target);
-            glFramebufferTexture1D(static_cast<GLenum>(target), static_cast<GLenum>(depthStencilAttachment), static_cast<GLenum>(texture->target()), texture->id(), mipLevel);
+            glFramebufferTexture1D(Corrade::Utility::castToUnderlyingType(target), Corrade::Utility::castToUnderlyingType(depthStencilAttachment), Corrade::Utility::castToUnderlyingType(texture->target()), texture->id(), mipLevel);
         }
 
         /**
@@ -285,7 +285,7 @@ class MAGNUM_EXPORT Framebuffer {
             /** @todo Check for internal format compatibility */
             /** @todo Check for texture target compatibility */
             bind(target);
-            glFramebufferTexture1D(static_cast<GLenum>(target), GL_COLOR_ATTACHMENT0 + colorAttachment, static_cast<GLenum>(texture->target()), texture->id(), mipLevel);
+            glFramebufferTexture1D(Corrade::Utility::castToUnderlyingType(target), GL_COLOR_ATTACHMENT0 + colorAttachment, Corrade::Utility::castToUnderlyingType(texture->target()), texture->id(), mipLevel);
         }
 
         /**
@@ -302,7 +302,7 @@ class MAGNUM_EXPORT Framebuffer {
             /** @todo Check for internal format compatibility */
             /** @todo Check for texture target compatibility */
             bind(target);
-            glFramebufferTexture2D(static_cast<GLenum>(target), static_cast<GLenum>(depthStencilAttachment), static_cast<GLenum>(texture->target()), texture->id(), mipLevel);
+            glFramebufferTexture2D(Corrade::Utility::castToUnderlyingType(target), Corrade::Utility::castToUnderlyingType(depthStencilAttachment), Corrade::Utility::castToUnderlyingType(texture->target()), texture->id(), mipLevel);
         }
 
         /**
@@ -319,7 +319,7 @@ class MAGNUM_EXPORT Framebuffer {
             /** @todo Check for internal format compatibility */
             /** @todo Check for texture target compatibility */
             bind(target);
-            glFramebufferTexture2D(static_cast<GLenum>(target), GL_COLOR_ATTACHMENT0 + colorAttachment, static_cast<GLenum>(texture->target()), texture->id(), mipLevel);
+            glFramebufferTexture2D(Corrade::Utility::castToUnderlyingType(target), GL_COLOR_ATTACHMENT0 + colorAttachment, Corrade::Utility::castToUnderlyingType(texture->target()), texture->id(), mipLevel);
         }
 
         /**
@@ -335,7 +335,7 @@ class MAGNUM_EXPORT Framebuffer {
         inline void attachCubeMapTexture(Target target, DepthStencilAttachment depthStencilAttachment, CubeMapTexture* texture, CubeMapTexture::Coordinate coordinate, GLint mipLevel) {
             /** @todo Check for internal format compatibility */
             bind(target);
-            glFramebufferTexture2D(static_cast<GLenum>(target), static_cast<GLenum>(depthStencilAttachment), static_cast<GLenum>(coordinate), texture->id(), mipLevel);
+            glFramebufferTexture2D(Corrade::Utility::castToUnderlyingType(target), Corrade::Utility::castToUnderlyingType(depthStencilAttachment), Corrade::Utility::castToUnderlyingType(coordinate), texture->id(), mipLevel);
         }
 
         /**
@@ -351,7 +351,7 @@ class MAGNUM_EXPORT Framebuffer {
         inline void attachCubeMapTexture(Target target, unsigned int colorAttachment, CubeMapTexture* texture, CubeMapTexture::Coordinate coordinate, GLint mipLevel) {
             /** @todo Check for internal format compatibility */
             bind(target);
-            glFramebufferTexture2D(static_cast<GLenum>(target), GL_COLOR_ATTACHMENT0 + colorAttachment, static_cast<GLenum>(coordinate), texture->id(), mipLevel);
+            glFramebufferTexture2D(Corrade::Utility::castToUnderlyingType(target), GL_COLOR_ATTACHMENT0 + colorAttachment, Corrade::Utility::castToUnderlyingType(coordinate), texture->id(), mipLevel);
         }
 
         /**
@@ -366,7 +366,7 @@ class MAGNUM_EXPORT Framebuffer {
             /** @todo Check for internal format compatibility */
             /** @todo Check for texture target compatibility */
             bind(target);
-            glFramebufferTexture3D(static_cast<GLenum>(target), static_cast<GLenum>(depthStencilAttachment), static_cast<GLenum>(texture->target()), texture->id(), mipLevel, layer);
+            glFramebufferTexture3D(Corrade::Utility::castToUnderlyingType(target), Corrade::Utility::castToUnderlyingType(depthStencilAttachment), Corrade::Utility::castToUnderlyingType(texture->target()), texture->id(), mipLevel, layer);
         }
 
         /**
@@ -381,7 +381,7 @@ class MAGNUM_EXPORT Framebuffer {
             /** @todo Check for internal format compatibility */
             /** @todo Check for texture target compatibility */
             bind(target);
-            glFramebufferTexture3D(static_cast<GLenum>(target), GL_COLOR_ATTACHMENT0 + colorAttachment, static_cast<GLenum>(texture->target()), texture->id(), mipLevel, layer);
+            glFramebufferTexture3D(Corrade::Utility::castToUnderlyingType(target), GL_COLOR_ATTACHMENT0 + colorAttachment, Corrade::Utility::castToUnderlyingType(texture->target()), texture->id(), mipLevel, layer);
         }
 
     private:

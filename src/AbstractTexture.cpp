@@ -15,6 +15,8 @@
 
 #include "AbstractTexture.h"
 
+using namespace Corrade::Utility;
+
 namespace Magnum {
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
@@ -35,7 +37,7 @@ texture_assert(7); texture_assert(15); texture_assert(23); texture_assert(31);
    anything up, this assert should produce the same results on all dimensions,
    thus testing only on AbstractTexture. */
 #define filter_or(filter, mipmap) \
-    (static_cast<GLint>(AbstractTexture::Filter::filter)|static_cast<GLint>(AbstractTexture::Mipmap::mipmap))
+    (castToUnderlyingType(AbstractTexture::Filter::filter)|castToUnderlyingType(AbstractTexture::Mipmap::mipmap))
 static_assert((filter_or(NearestNeighbor, BaseLevel) == GL_NEAREST) &&
               (filter_or(NearestNeighbor, NearestLevel) == GL_NEAREST_MIPMAP_NEAREST) &&
               (filter_or(NearestNeighbor, LinearInterpolation) == GL_NEAREST_MIPMAP_LINEAR) &&
@@ -52,7 +54,7 @@ void AbstractTexture::setMinificationFilter(Filter filter, Mipmap mipmap) {
 
     bind();
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
-        static_cast<GLint>(filter)|static_cast<GLint>(mipmap));
+        castToUnderlyingType(filter)|castToUnderlyingType(mipmap));
 }
 
 void AbstractTexture::generateMipmap() {

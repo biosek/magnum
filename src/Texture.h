@@ -60,7 +60,7 @@ template<size_t textureDimensions> class Texture: public AbstractTexture {
          *
          * Creates one OpenGL texture.
          */
-        inline Texture(GLint layer = 0, Target target = DataHelper<Dimensions>::target()): AbstractTexture(layer, static_cast<GLenum>(target)), _target(target) {}
+        inline Texture(GLint layer = 0, Target target = DataHelper<Dimensions>::target()): AbstractTexture(layer, Corrade::Utility::castToUnderlyingType(target)), _target(target) {}
 
         /** @brief %Texture target */
         inline Target target() const { return _target; }

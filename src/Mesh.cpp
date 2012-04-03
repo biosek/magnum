@@ -55,11 +55,11 @@ void Mesh::draw() {
         /* Bind all attributes to this buffer */
         for(vector<Attribute>::const_iterator ait = it->second.second.begin(); ait != it->second.second.end(); ++ait)
             if(TypeInfo::isIntegral(ait->type))
-                glVertexAttribIPointer(ait->attribute, ait->size, static_cast<GLenum>(ait->type), ait->stride, ait->pointer);
-            else glVertexAttribPointer(ait->attribute, ait->size, static_cast<GLenum>(ait->type), GL_FALSE, ait->stride, ait->pointer);
+                glVertexAttribIPointer(ait->attribute, ait->size, castToUnderlyingType(ait->type), ait->stride, ait->pointer);
+            else glVertexAttribPointer(ait->attribute, ait->size, castToUnderlyingType(ait->type), GL_FALSE, ait->stride, ait->pointer);
     }
 
-    glDrawArrays(static_cast<GLenum>(_primitive), 0, _vertexCount);
+    glDrawArrays(castToUnderlyingType(_primitive), 0, _vertexCount);
 
     /* Disable vertex arrays for all attributes */
     for(set<GLuint>::const_iterator it = _attributes.begin(); it != _attributes.end(); ++it)
