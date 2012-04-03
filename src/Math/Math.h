@@ -59,7 +59,7 @@ size_t MAGNUM_EXPORT log(size_t base, size_t number);
  * @brief Angle in degrees
  *
  * Literal to make angle entering less error-prone. Converts the value to
- * radians at compile time. For example @c 180_deg is converted to @c 3.14.
+ * radians at compile time. For example `180_deg` is converted to `3.14`.
  */
 inline constexpr double operator "" _deg(long double value) { return value*PI/180; }
 

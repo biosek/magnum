@@ -15,7 +15,10 @@
 
 #include "IndexedMesh.h"
 
+#include <cassert>
+
 using namespace std;
+using namespace Corrade::Utility;
 
 namespace Magnum {
 
@@ -34,31 +37,28 @@ void IndexedMesh::draw() {
 
         /* Bind all attributes to this buffer */
         for(vector<Attribute>::const_iterator ait = it->second.second.begin(); ait != it->second.second.end(); ++ait)
-            switch(ait->type) {
-                case GL_BYTE:
-                case GL_UNSIGNED_BYTE:
-                case GL_SHORT:
-                case GL_UNSIGNED_SHORT:
-                case GL_INT:
-                case GL_UNSIGNED_INT:
-                    glVertexAttribIPointer(ait->attribute, ait->size, ait->type, ait->stride, ait->pointer);
-                    break;
-                default:
-                    glVertexAttribPointer(ait->attribute, ait->size, ait->type, GL_FALSE, ait->stride, ait->pointer);
-            }
-
-        /* Unbind buffer */
-        it->first->unbind();
+            if(TypeInfo::isIntegral(ait->type))
+                glVertexAttribIPointer(ait->attribute, ait->size, static_cast<GLenum>(ait->type), ait->stride, ait->pointer);
+            else glVertexAttribPointer(ait->attribute, ait->size, static_cast<GLenum>(ait->type), GL_FALSE, ait->stride, ait->pointer);
     }
 
     /* Bind index array, draw the elements and unbind */
     _indexBuffer.bind();
-    glDrawElements(primitive(), _indexCount, _indexType, nullptr);
-    _indexBuffer.unbind();
+    /** @todo Start at given index */
+    glDrawElements(static_cast<GLenum>(primitive()), _indexCount, static_cast<GLenum>(_indexType), nullptr);
 
     /* Disable vertex arrays for all attributes */
     for(set<GLuint>::const_iterator it = attributes().begin(); it != attributes().end(); ++it)
         glDisableVertexAttribArray(*it);
+}
+
+void IndexedMesh::finalize() {
+    if(!_indexCount) {
+        Error() << "IndexedMesh: the mesh has zero index count!";
+        assert(0);
+    }
+
+    Mesh::finalize();
 }
 
 }

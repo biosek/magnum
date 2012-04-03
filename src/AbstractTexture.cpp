@@ -53,7 +53,6 @@ void AbstractTexture::setMinificationFilter(Filter filter, Mipmap mipmap) {
     bind();
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
         static_cast<GLint>(filter)|static_cast<GLint>(mipmap));
-    unbind();
 }
 
 void AbstractTexture::generateMipmap() {
@@ -61,7 +60,44 @@ void AbstractTexture::generateMipmap() {
 
     bind();
     glGenerateMipmap(target);
-    unbind();
+}
+
+AbstractTexture::InternalFormat::InternalFormat(AbstractTexture::Components components, AbstractTexture::ComponentType type) {
+    #define internalFormatSwitch(c) switch(type) {                          \
+        case ComponentType::UnsignedByte:                                   \
+            internalFormat = GL_##c##8UI; break;                            \
+        case ComponentType::Byte:                                           \
+            internalFormat = GL_##c##8I; break;                             \
+        case ComponentType::UnsignedShort:                                  \
+            internalFormat = GL_##c##16UI; break;                           \
+        case ComponentType::Short:                                          \
+            internalFormat = GL_##c##16I; break;                            \
+        case ComponentType::UnsignedInt:                                    \
+            internalFormat = GL_##c##32UI; break;                           \
+        case ComponentType::Int:                                            \
+            internalFormat = GL_##c##32I; break;                            \
+        case ComponentType::Half:                                           \
+            internalFormat = GL_##c##16F; break;                            \
+        case ComponentType::Float:                                          \
+            internalFormat = GL_##c##32F; break;                            \
+        case ComponentType::NormalizedUnsignedByte:                         \
+            internalFormat = GL_##c##8; break;                              \
+        case ComponentType::NormalizedByte:                                 \
+            internalFormat = GL_##c##8_SNORM; break;                        \
+        case ComponentType::NormalizedUnsignedShort:                        \
+            internalFormat = GL_##c##16; break;                             \
+        case ComponentType::NormalizedShort:                                \
+            internalFormat = GL_##c##16_SNORM; break;                       \
+    }
+    if(components == Components::Red)
+        internalFormatSwitch(R)
+    else if(components == Components::RedGreen)
+        internalFormatSwitch(RG)
+    else if(components == Components::RGB)
+        internalFormatSwitch(RGB)
+    else if(components == Components::RGBA)
+        internalFormatSwitch(RGBA)
+    #undef internalFormatSwitch
 }
 
 }

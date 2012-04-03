@@ -1,0 +1,17 @@
+/** @namespace Magnum::MeshTools
+@brief %Mesh tools
+
+Tools for generating, optimizing and cleaning meshes.
+*/
+
+/** @namespace Magnum::Primitives
+@brief Primitive library
+
+Basic primitives for testing purposes.
+*/
+
+/** @namespace Magnum::Shaders
+@brief Sample shaders
+
+Collection of shaders for testing purposes.
+*/

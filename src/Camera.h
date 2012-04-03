@@ -46,7 +46,9 @@ class MAGNUM_EXPORT Camera: public Object {
          * @brief Constructor
          * @param parent        Parent object
          *
-         * Calls <tt>setOrthographic(2, 1, 1000)</tt>.
+         * Sets orthographic projection to the default OpenGL cube (range
+         * @f$ [-1; 1] @f$ in all directions) and clear color to black.
+         * @see setOrthographic(), setClearColor()
          */
         Camera(Object* parent = nullptr);
 
@@ -62,8 +64,8 @@ class MAGNUM_EXPORT Camera: public Object {
          * @param near      Near clipping plane
          * @param far       Far clipping plane
          *
-         * The volume of given size will be scaled down to range (-1, 1) on all
-         * directions.
+         * The volume of given size will be scaled down to range
+         * @f$ [-1; 1] @f$ on all directions.
          */
         void setOrthographic(GLfloat size, GLfloat near, GLfloat far);
 
@@ -101,7 +103,7 @@ class MAGNUM_EXPORT Camera: public Object {
         inline Matrix4 projectionMatrix() const { return _projectionMatrix; }
 
         /** @brief Viewport size */
-        inline Math::Vector2<unsigned int> viewport() const { return _viewport; }
+        inline Math::Vector2<GLsizei> viewport() const { return _viewport; }
 
         /**
          * @brief Set viewport size
@@ -109,25 +111,43 @@ class MAGNUM_EXPORT Camera: public Object {
          * Called when assigning the camera to the scene or when window
          * size changes.
          */
-        void setViewport(const Math::Vector2<unsigned int>& size);
+        virtual void setViewport(const Math::Vector2<GLsizei>& size);
 
-        /** @copydoc setViewport(const Math::Vector2<unsigned int>& size); */
-        inline void setViewport(unsigned int width, unsigned int height) {
-            setViewport({width, height});
-        }
+        /** @brief Clear color */
+        inline Vector4 clearColor() const { return _clearColor; }
+
+        /** @brief Set clear color */
+        void setClearColor(const Vector4& color);
+
+        /**
+         * @brief Draw the scene
+         *
+         * Clears the color, depth and stencil buffer and draws the scene
+         * using drawChildren().
+         */
+        virtual void draw();
 
         /**
          * Recalculates camera matrix.
          */
-        virtual void setClean();
+        void setClean();
+
+    protected:
+        /**
+         * @brief Draw object children
+         *
+         * Recursively draws all children of the object.
+         */
+        void drawChildren(Object* object, const Matrix4& transformationMatrix);
 
     private:
         Matrix4 rawProjectionMatrix;
         Matrix4 _projectionMatrix;
         Matrix4 _cameraMatrix;
+        Vector4 _clearColor;
         GLfloat _near, _far;
 
-        Math::Vector2<unsigned int> _viewport;
+        Math::Vector2<GLsizei> _viewport;
         AspectRatioPolicy _aspectRatioPolicy;
 
         void fixAspectRatio();

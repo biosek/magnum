@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_Mesh_h
-#define Magnum_Trade_Mesh_h
+#ifndef Magnum_Trade_MeshData_h
+#define Magnum_Trade_MeshData_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,37 +16,44 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::Mesh
+ * @brief Class Magnum::Trade::MeshData
  */
 
-#include "../Mesh.h"
+#include "Mesh.h"
 
 namespace Magnum { namespace Trade {
 
 /**
-@brief %Mesh
+@brief %Mesh data
 
 Provides access to mesh data and additional information, such as primitive
 type.
 */
-class MAGNUM_EXPORT Mesh {
-    Mesh(const Mesh& other) = delete;
-    Mesh(Mesh&& other) = delete;
-    Mesh& operator=(const Mesh& other) = delete;
-    Mesh& operator=(Mesh&& other) = delete;
+class MAGNUM_EXPORT MeshData {
+    MeshData(const MeshData& other) = delete;
+    MeshData(MeshData&& other) = delete;
+    MeshData& operator=(const MeshData& other) = delete;
+    MeshData& operator=(MeshData&& other) = delete;
 
     public:
         /**
          * @brief Constructor
-         * @param   primitive   Primitive
+         * @param primitive         Primitive
+         * @param indices           Array with indices or 0, if this is not
+         *      indexed mesh
+         * @param vertices          Array with vertex arrays. At least one
+         *      vertex array should be present.
+         * @param normals           Array with normal arrays or empty array
+         * @param textureCoords2D   Array with two-dimensional texture
+         *      coordinate arrays or empty array
          */
-        inline Mesh(Magnum::Mesh::Primitive primitive, std::vector<unsigned int>* indices, std::vector<std::vector<Vector3>*> vertices, std::vector<std::vector<Vector3>*> normals, std::vector<std::vector<Vector2>*> textureCoords2D): _primitive(primitive), _indices(indices), _vertices(vertices), _normals(normals), _textureCoords2D(textureCoords2D) {}
+        inline MeshData(Mesh::Primitive primitive, std::vector<unsigned int>* indices, std::vector<std::vector<Vector4>*> vertices, std::vector<std::vector<Vector3>*> normals, std::vector<std::vector<Vector2>*> textureCoords2D): _primitive(primitive), _indices(indices), _vertices(vertices), _normals(normals), _textureCoords2D(textureCoords2D) {}
 
         /** @brief Destructor */
-        ~Mesh();
+        ~MeshData();
 
         /** @brief Primitive */
-        inline Magnum::Mesh::Primitive primitive() const { return _primitive; }
+        inline Mesh::Primitive primitive() const { return _primitive; }
 
         /**
          * @brief Indices
@@ -63,7 +70,7 @@ class MAGNUM_EXPORT Mesh {
          * @return Vertices or nullptr if there is no vertex array with given
          *      ID.
          */
-        inline std::vector<Vector3>* vertices(size_t id) { return _vertices[id]; }
+        inline std::vector<Vector4>* vertices(size_t id) { return _vertices[id]; }
 
         /** @brief Count of normal arrays */
         inline size_t normalArrayCount() { return _normals.size(); };
@@ -82,16 +89,16 @@ class MAGNUM_EXPORT Mesh {
         /**
          * @brief 2D texture coordinates
          * @param id    ID of texture coordinates array
-         * @return Texture coordinates or nullptr if there is no texture
+         * @return %Texture coordinates or nullptr if there is no texture
          *      coordinates array with given ID.
          */
         inline std::vector<Vector2>* textureCoords2D(size_t id) { return _textureCoords2D[id]; }
 
     private:
-        Magnum::Mesh::Primitive _primitive;
+        Mesh::Primitive _primitive;
         std::vector<unsigned int>* _indices;
-        std::vector<std::vector<Vector3>*> _vertices,
-            _normals;
+        std::vector<std::vector<Vector4>*> _vertices;
+        std::vector<std::vector<Vector3>*> _normals;
         std::vector<std::vector<Vector2>*> _textureCoords2D;
 };
 

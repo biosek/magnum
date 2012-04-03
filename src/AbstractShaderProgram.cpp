@@ -15,6 +15,7 @@
 
 #include "AbstractShaderProgram.h"
 
+#include <cassert>
 #include <fstream>
 
 #define LINKER_MESSAGE_MAX_LENGTH 1024
@@ -49,33 +50,27 @@ bool AbstractShaderProgram::attachShader(Shader* shader) {
     return true;
 }
 
-bool AbstractShaderProgram::bindAttribute(GLuint location, const string& name) {
+void AbstractShaderProgram::bindAttribute(GLuint location, const string& name) {
     if(state != Initialized) {
         Error() << "AbstractShaderProgram: attribute cannot be bound after linking.";
-        return false;
+        assert(0);
     }
 
-    /* Check whether given id already exists */
-    if(attributes.find(location) != attributes.end()) return false;
+    glBindAttribLocation(program, location, name.c_str());
+}
 
-    /* Check whether given name already exists */
-    for(map<GLuint, string>::const_iterator it = attributes.begin(); it != attributes.end(); ++it)
-        if(it->second == name) return false;
+void AbstractShaderProgram::bindFragmentDataLocation(GLuint location, const std::string& name) {
+    if(state != Initialized) {
+        Error() << "AbstractShaderProgram: fragment data location cannot be bound after linking.";
+        assert(0);
+    }
 
-    attributes.insert(pair<GLuint, string>(location, name));
-    return true;
+    glBindFragDataLocation(program, location, name.c_str());
 }
 
 void AbstractShaderProgram::link() {
     /* Already compiled or failed, exit */
     if(state != Initialized) return;
-
-    /* Set state to failed if anything goes wrong */
-    state = Failed;
-
-    /* Bind attributes to specified locations */
-    for(map<GLuint, string>::const_iterator it = attributes.begin(); it != attributes.end(); ++it)
-        glBindAttribLocation(program, it->first, it->second.c_str());
 
     /* Link shader program */
     glLinkProgram(program);
@@ -109,12 +104,13 @@ void AbstractShaderProgram::link() {
 GLint AbstractShaderProgram::uniformLocation(const std::string& name) {
     if(state != Linked) {
         Error() << "AbstractShaderProgram: uniform location cannot be retrieved before linking.";
+        assert(0);
         return -1;
     }
 
     GLint location = glGetUniformLocation(program, name.c_str());
     if(location == -1)
-        Error() << "AbstractShaderProgram: location of uniform \'" + name + "\' cannot be retrieved!";
+        Warning() << "AbstractShaderProgram: location of uniform \'" + name + "\' cannot be retrieved!";
     return location;
 }
 

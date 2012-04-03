@@ -26,31 +26,28 @@ namespace Magnum { namespace Shaders {
 /** @brief Phong shader */
 class PhongShader: public AbstractShaderProgram {
     public:
-        /** @brief Attribute */
-        enum Attribute {
-            Vertex = 1,     /**< @brief Vertex position (four-component vector) */
-            Normal = 2      /**< @brief Normal direction (three-component vector) */
-        };
+        typedef Attribute<0, Vector4> Vertex;   /**< @brief Vertex position */
+        typedef Attribute<1, Vector3> Normal;   /**< @brief Normal direction */
 
         /** @brief Constructor */
         PhongShader();
 
-        /** @brief Object ambient color */
+        /** @brief %Object ambient color */
         inline void setAmbientColorUniform(const Vector3& color) {
             setUniform(ambientColorUniform, color);
         }
 
-        /** @brief Object diffuse color */
+        /** @brief %Object diffuse color */
         inline void setDiffuseColorUniform(const Vector3& color) {
             setUniform(diffuseColorUniform, color);
         }
 
-        /** @brief Object specular color */
+        /** @brief %Object specular color */
         inline void setSpecularColorUniform(const Vector3& color) {
             setUniform(specularColorUniform, color);
         }
 
-        /** @brief Object shininess */
+        /** @brief %Object shininess */
         inline void setShininessUniform(GLfloat shininess) {
             setUniform(shininessUniform, shininess);
         }
@@ -65,22 +62,22 @@ class PhongShader: public AbstractShaderProgram {
             setUniform(projectionMatrixUniform, matrix);
         }
 
-        /** @brief Light position */
+        /** @brief %Light position */
         inline void setLightUniform(const Vector3& light) {
             setUniform(lightUniform, light);
         }
 
-        /** @brief Light ambient color */
+        /** @brief %Light ambient color */
         inline void setLightAmbientColorUniform(const Vector3& color) {
             setUniform(lightAmbientColorUniform, color);
         }
 
-        /** @brief Light diffuse color */
+        /** @brief %Light diffuse color */
         inline void setLightDiffuseColorUniform(const Vector3& color) {
             setUniform(lightDiffuseColorUniform, color);
         }
 
-        /** @brief Light specular color */
+        /** @brief %Light specular color */
         inline void setLightSpecularColorUniform(const Vector3& color) {
             setUniform(lightSpecularColorUniform, color);
         }

@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_Camera_h
-#define Magnum_Trade_Camera_h
+#ifndef Magnum_MeshTools_Test_CompressIndicesTest_h
+#define Magnum_MeshTools_Test_CompressIndicesTest_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -15,22 +15,19 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-/** @file
- * @brief Class Magnum::Trade::Camera
- */
+#include <QtCore/QObject>
 
-namespace Magnum { namespace Trade {
+namespace Magnum { namespace MeshTools { namespace Test {
 
-/**
-@brief %Camera
-*/
-class MAGNUM_EXPORT Camera {
-    Camera(const Camera& other) = delete;
-    Camera(Camera&& other) = delete;
-    Camera& operator=(const Camera& other) = delete;
-    Camera& operator=(Camera&& other) = delete;
+class CompressIndicesTest: public QObject {
+    Q_OBJECT
+
+    private slots:
+        void compressChar();
+        void compressShort();
+        void compressInt();
 };
 
-}}
+}}}
 
 #endif

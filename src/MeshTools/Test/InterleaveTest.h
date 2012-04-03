@@ -1,5 +1,5 @@
-#ifndef Magnum_Test_MeshBuilderTest_h
-#define Magnum_Test_MeshBuilderTest_h
+#ifndef Magnum_MeshTools_Test_InterleaveTest_h
+#define Magnum_MeshTools_Test_InterleaveTest_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -17,16 +17,17 @@
 
 #include <QtCore/QObject>
 
-namespace Magnum { namespace Test {
+namespace Magnum { namespace MeshTools { namespace Test {
 
-class MeshBuilderTest: public QObject {
+class InterleaveTest: public QObject {
     Q_OBJECT
 
     private slots:
-        void setData();
-        void addFace();
+        void attributeCount();
+        void stride();
+        void write();
 };
 
-}}
+}}}
 
 #endif

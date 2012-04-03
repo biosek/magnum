@@ -20,14 +20,13 @@
  */
 
 #include "Magnum.h"
-#include "TypeTraits.h"
 
 namespace Magnum {
 
 /**
-@brief Non-templated base for Texture
+@brief Non-templated base for one-, two- or three-dimensional textures.
 
-See Texture documentation for more information.
+See Texture, CubeMapTexture documentation for more information.
 */
 class MAGNUM_EXPORT AbstractTexture {
     AbstractTexture(const AbstractTexture& other) = delete;
@@ -36,7 +35,7 @@ class MAGNUM_EXPORT AbstractTexture {
     AbstractTexture& operator=(AbstractTexture&& other) = delete;
 
     public:
-        /** @brief Texture filtering */
+        /** @brief %Texture filtering */
         enum class Filter: GLint {
             /**
              * Nearest neighbor filtering
@@ -68,7 +67,7 @@ class MAGNUM_EXPORT AbstractTexture {
             LinearInterpolation = GL_NEAREST_MIPMAP_LINEAR & ~GL_NEAREST
         };
 
-        /** @brief Texture wrapping on the edge */
+        /** @brief %Texture wrapping on the edge */
         enum class Wrapping: GLint {
             /**
              * Repeat texture. Unavailable on rectangle textures.
@@ -93,34 +92,233 @@ class MAGNUM_EXPORT AbstractTexture {
             ClampToBorder = GL_CLAMP_TO_BORDER
         };
 
-        /** @brief Internal format */
-        enum class InternalFormat: GLint {
-            Red = GL_RED,
-            RedGreen = GL_RG,
-            RGB = GL_RGB,
-            RGBA = GL_RGBA,
-            BGR = GL_BGR,
-            BGRA = GL_BGRA,
-            CompressedRed = GL_COMPRESSED_RED,
-            CompressedRedGreen = GL_COMPRESSED_RG,
-            CompressedRGB = GL_COMPRESSED_RGB,
-            CompressedRGBA = GL_COMPRESSED_RGBA
+        /** @{ @name Internal texture formats */
+
+        /** @brief Color components */
+        enum class Components {
+            /**
+             * Red component only. Green and blue are set to `0`, alpha is set
+             * to `1`.
+             */
+            Red,
+
+            /**
+             * Red and green component. Blue is set to `0`, alpha is set to
+             * `1`.
+             */
+            RedGreen,
+
+            RGB,            /**< Red, green and blue component. Alpha is set to `1`. */
+            RGBA            /**< Red, green, blue component and alpha. */
         };
 
-        /** @brief Color format */
-        enum class ColorFormat: GLenum {
-            Red = GL_RED,
-            RedGreen = GL_RG,
-            RGB = GL_RGB,
-            RGBA = GL_RGBA,
-            BGR = GL_BGR,
-            BGRA = GL_BGRA
+        /** @brief Type of data per each component */
+        enum class ComponentType {
+            UnsignedByte,   /**< Unsigned byte (char) */
+            Byte,           /**< Byte (char) */
+            UnsignedShort,  /**< Unsigned short */
+            Short,          /**< Short */
+            UnsignedInt,    /**< Unsigned integer */
+            Int,            /**< Integer */
+            Half,           /**< Half float (16 bit) */
+            Float,          /**< Float (32 bit) */
+
+            /**
+             * Normalized unsigned byte, i.e. values from range
+             * @f$ [0; 255] @f$ are converted to range @f$ [0.0; 1.0] @f$.
+             */
+            NormalizedUnsignedByte,
+
+            /**
+             * Normalized byte, i.e. values from range
+             * @f$ [-128; 127] @f$ are converted to range @f$ [0.0; 1.0] @f$.
+             */
+            NormalizedByte,
+
+            /**
+             * Normalized unsigned short, i.e. values from range
+             * @f$ [0; 65536] @f$ are converted to range @f$ [0.0; 1.0] @f$.
+             */
+            NormalizedUnsignedShort,
+
+            /**
+             * Normalized short, i.e. values from range
+             * @f$ [-32768; 32767] @f$ are converted to range @f$ [0.0; 1.0] @f$.
+             */
+            NormalizedShort
         };
+
+        /**
+         * @brief Internal format
+         *
+         * For more information about default values for unused components and
+         * normalization see enums Components and ComponentType.
+         */
+        enum class Format: GLenum {
+            /**
+             * One-component (red channel), unsigned normalized, probably
+             * 8bit.
+             */
+            Red = GL_RED,
+
+            /**
+             * Two-component (red and green channel), unsigned normalized,
+             * each component probably 8bit, 16bit total.
+             */
+            RedGreen = GL_RG,
+
+            /**
+             * Three-component RGB, unsigned normalized, each component
+             * probably 8bit, 24bit total.
+             */
+            RGB = GL_RGB,
+
+            /**
+             * Four-component RGBA, unsigned normalized, each component
+             * probably 8bit, 24bit total.
+             */
+            RGBA = GL_RGBA,
+
+            /**
+             * Three-component BGR, unsigned normalized, each component
+             * probably 8bit, 24bit total.
+             */
+            BGR = GL_BGR,
+
+            /**
+             * Four-component BGRA, unsigned normalized, each component
+             * probably 8bit, 24bit total.
+             */
+            BGRA = GL_BGRA,
+
+            /**
+             * Four-component sRGBA, unsigned normalized, each component
+             * 8bit, 32bit total.
+             */
+            SRGBA8 = GL_SRGB8_ALPHA8,
+
+            /**
+             * Three-component sRGB, unsigned normalized, each component
+             * 8bit, 24bit total.
+             */
+            SRGB8 = GL_SRGB8,
+
+            /**
+             * Four-component RGBA, unsigned normalized, each RGB component
+             * 10bit, alpha 2bit, 32bit total.
+             */
+            RGB10Alpha2 = GL_RGB10_A2,
+
+            /**
+             * Four-component RGBA, unsigned integers, each RGB component
+             * 10bit, alpha channel 2bit, 32bit total.
+             */
+            RGB10Alpha2Unsigned = GL_RGB10_A2UI,
+
+            /**
+             * Four-component RGBA, unsigned normalized, each RGB component
+             * 5bit, alpha 1bit, 16bit total.
+             */
+            RGB5Alpha1 = GL_RGB5_A1,
+
+            /**
+             * Four-component RGBA, unsigned normalized, each component 4bit,
+             * 16bit total.
+             */
+            RGBA4 = GL_RGBA4,
+
+            /**
+             * Three-component RGB, float, red and green 11bit, blue 10bit,
+             * 32bit total.
+             */
+            RG11B10Float = GL_R11F_G11F_B10F,
+
+            #if defined(GL_RGB565) || defined(DOXYGEN_GENERATING_OUTPUT)
+            /**
+             * Three-component RGB, unsigned normalized, red and blue 5bit,
+             * green 6bit, 16bit total.
+             */
+            RGB565 = GL_RGB565,
+            #endif
+
+            /**
+             * Three-component RGB, unsigned integers with exponent, each
+             * component 9bit, exponent 5bit, 32bit total.
+             */
+            RGB9Exponent5 = GL_RGB9_E5,
+
+            /**
+             * Compressed red channel, unsigned normalized.
+             */
+            CompressedRed = GL_COMPRESSED_RED,
+
+            /**
+             * Compressed red and green channel, unsigned normalized.
+             */
+            CompressedRedGreen = GL_COMPRESSED_RG,
+
+            /** Compressed RGB, unsigned normalized. */
+            CompressedRGB = GL_COMPRESSED_RGB,
+
+            /** Compressed RGBA, unsigned normalized. */
+            CompressedRGBA = GL_COMPRESSED_RGBA,
+
+            /** RTGC compressed red channel, unsigned normalized. */
+            CompressedRtgcRed = GL_COMPRESSED_RED_RGTC1,
+
+            /** RTGC compressed red channel, signed normalized. */
+            CompressedRtgcSignedRed = GL_COMPRESSED_SIGNED_RED_RGTC1,
+
+            /** RTGC compressed red and green channel, unsigned normalized. */
+            CompressedRtgcRedGreen = GL_COMPRESSED_RG_RGTC2,
+
+            /** RTGC compressed red and green channel, signed normalized. */
+            CompressedRtgcSignedRedGreen = GL_COMPRESSED_SIGNED_RG_RGTC2,
+
+            #if defined(GL_RGB565) || defined(DOXYGEN_GENERATING_OUTPUT)
+            /** BTPC compressed RGBA, unsigned normalized. */
+            CompressedBtpcRGBA = GL_COMPRESSED_RGBA_BPTC_UNORM,
+
+            /** BTPC compressed sRGBA, unsigned normalized. */
+            CompressedBtpcSRGBA = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
+
+            /** BTPC compressed RGB, signed float. */
+            CompressedBtpcRGBSignedFloat = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
+
+            /** BTPC compressed RGB, unsigned float. */
+            CompressedBtpcRGBUnsignedFloat = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
+            #endif
+
+            /** Depth component. */
+            Depth = GL_DEPTH_COMPONENT,
+
+            /** Depth and stencil component. */
+            DepthStencil = GL_DEPTH_STENCIL,
+
+            /** 16bit depth component. */
+            Depth16 = GL_DEPTH_COMPONENT16,
+
+            /** 24bit depth component. */
+            Depth24 = GL_DEPTH_COMPONENT24,
+
+            /** 32bit float depth component. */
+            Depth32Float = GL_DEPTH_COMPONENT32F,
+
+            /** 24bit depth and 8bit stencil component.  */
+            Depth24Stencil8 = GL_DEPTH24_STENCIL8,
+
+            /** 32bit float depth component and 8bit stencil component. */
+            Depth32FloatStencil8 = GL_DEPTH32F_STENCIL8
+        };
+
+        class InternalFormat;
+
+        /*@}*/
 
         /**
          * @brief Constructor
          * @param layer     %Texture layer (number between 0 and 31)
-         * @param target    Target, e.g. @c GL_TEXTURE_2D.
+         * @param target    Target, e.g. `GL_TEXTURE_2D`.
          *
          * Creates one OpenGL texture.
          */
@@ -138,24 +336,23 @@ class MAGNUM_EXPORT AbstractTexture {
             glDeleteTextures(1, &texture);
         }
 
-        /** @brief Texture layer */
+        /** @brief %Texture layer */
         inline GLint layer() const { return _layer; }
 
-        /** @brief Bind texture for usage / rendering */
-        inline void bind() const {
-            glActiveTexture(GL_TEXTURE0 + _layer);
-            glBindTexture(target, texture);
-        }
+        /** @brief OpenGL internal texture ID */
+        inline GLuint id() const { return texture; }
 
         /**
-         * @brief Unbind texture
+         * @brief Bind texture for usage / rendering
          *
-         * @note Unbinds any texture from given dimension, not only this
-         * particular one.
+         * Sets current texture as active in its texture layer. Note that
+         * only one texture can be bound to given layer.
+         *
+         * @see layer()
          */
-        inline void unbind() const {
+        inline void bind() {
             glActiveTexture(GL_TEXTURE0 + _layer);
-            glBindTexture(target, 0);
+            glBindTexture(target, texture);
         }
 
         /**
@@ -187,19 +384,17 @@ class MAGNUM_EXPORT AbstractTexture {
         inline void setMagnificationFilter(Filter filter) {
             bind();
             glTexParameteri(target, GL_TEXTURE_MAG_FILTER, static_cast<GLint>(filter));
-            unbind();
         }
 
         /**
          * @brief Set border color
          *
          * Border color when @ref AbstractTexture::Wrapping "wrapping" is set
-         * to @c ClampToBorder.
+         * to `ClampToBorder`.
          */
         inline void setBorderColor(const Vector4& color) {
             bind();
             glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color.data());
-            unbind();
         }
 
         /**
@@ -211,8 +406,6 @@ class MAGNUM_EXPORT AbstractTexture {
         void generateMipmap();
 
     protected:
-        const GLenum target;        /**< @brief Texture target */
-
         /**
          * @brief Helper for setting texture data
          *
@@ -221,82 +414,184 @@ class MAGNUM_EXPORT AbstractTexture {
         template<size_t textureDimensions> struct DataHelper {
             #ifdef DOXYGEN_GENERATING_OUTPUT
             /**
+             * @brief %Texture target
+             *
+             * Each dimension has its own unique subset of these targets.
+             */
+            enum class Target: GLenum {
+                Texture1D = GL_TEXTURE_1D,
+                Texture2D = GL_TEXTURE_2D,
+                Texture3D = GL_TEXTURE_3D,
+                Array1D = GL_TEXTURE_1D_ARRAY,
+                Array2D = GL_TEXTURE_2D_ARRAY,
+                Rectangle = GL_TEXTURE_RECTANGLE,
+                CubeMap = GL_TEXTURE_CUBE_MAP,
+                CubeMapPositiveX = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+                CubeMapNegativeX = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+                CubeMapPositiveY = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+                CubeMapNegativeY = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                CubeMapPositiveZ = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+                CubeMapNegativeZ = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+            };
+
+            /**
              * @brief Target for given dimension
              *
-             * Returns @c GL_TEXTURE_1D, @c GL_TEXTURE_2D or @c GL_TEXTURE_3D
-             * based on dimension count.
+             * Returns `Target::Texture1D`, `Target::Texture2D` or
+             * `Target::Texture3D` based on dimension count.
              */
-            inline constexpr static GLenum target();
+            inline constexpr static Target target();
+
+            /**
+             * @brief Set texture wrapping
+             * @param target            Target, such as `GL_TEXTURE_RECTANGLE`
+             * @param wrapping          Wrapping type for all texture dimensions
+             */
+            inline static void setWrapping(GLenum target, const Math::Vector<Wrapping, Dimensions>& wrapping);
 
             /**
              * @brief Set texture data
-             * @param target            Target, such as @c GL_TEXTURE_RECTANGLE
+             * @param target            %Target
              * @param mipLevel          Mip level
              * @param internalFormat    Internal texture format
-             * @param dimensions        %Texture dimensions
-             * @param colorFormat       Color format of passed data
-             * @param type              Data type
-             * @param data              %Texture data
+             * @param image             Image, BufferedImage or for example
+             *      Trade::ImageData of the same dimension count
              *
-             * Calls @c glTexImage1D, @c glTexImage2D, @c glTexImage3D depending
+             * Calls `glTexImage1D`, `glTexImage2D`, `glTexImage3D` depending
              * on dimension count.
              */
-            inline static void set(GLenum target, GLint mipLevel, InternalFormat internalFormat, const Math::Vector<GLsizei, textureDimensions>& dimensions, ColorFormat colorFormat, GLenum type, const void* data);
+            template<class T> inline static void set(Target target, GLint mipLevel, InternalFormat internalFormat, T* image);
 
             /**
              * @brief Set texture subdata
-             * @param target            Target, such as @c GL_TEXTURE_RECTANGLE
+             * @param target            %Target
              * @param mipLevel          Mip level
              * @param offset            Offset where to put data in the texture
-             * @param dimensions        %Texture dimensions
-             * @param colorFormat       Color format of passed data
-             * @param type              Data type
-             * @param data              %Texture data
+             * @param image             Image, BufferedImage or for example
+             *      Trade::ImageData of the same dimension count
              *
-             * Calls @c glTexSubImage1D, @c glTexSubImage2D, @c glTexSubImage3D
+             * Calls `glTexSubImage1D`, `glTexSubImage2D`, `glTexSubImage3D`
              * depending on dimension count.
              */
-            inline static void setSub(GLenum target, GLint mipLevel, const Math::Vector<GLint, textureDimensions>& offset, const Math::Vector<GLsizei, textureDimensions>& dimensions, ColorFormat colorFormat, GLenum type, const void* data);
+            template<class T> inline static void setSub(Target target, GLint mipLevel, const Math::Vector<GLint, textureDimensions>& offset, T* image);
             #endif
         };
 
     private:
+        const GLenum target;
         const GLint _layer;
         GLuint texture;
 };
 
+/**
+@brief Internal format
+
+When specifying internal format, you can either specify as binary OR of
+component count (using Component enum) and data type per component (value from
+ComponentType enum), or using one of named internal formats from Format enum,
+e.g.:
+@code
+InternalFormat fmt1 = Format::RGBA;
+InternalFormat fmt2 = Components::RGBA|ComponentType::NormalizedUnsignedByte;
+@endcode
+You can also use the constructor directly instead of binary OR:
+@code
+InternalFormat fmt2(Components::RGBA, ComponentType::NormalizedUnsignedByte);
+@endcode
+*/
+class AbstractTexture::InternalFormat {
+    public:
+        /** @brief Constructor from component count and data type per component */
+        InternalFormat(Components components, ComponentType type);
+
+        /** @brief Constructor from named internal format */
+        inline constexpr InternalFormat(Format format): internalFormat(static_cast<GLint>(format)) {}
+
+        /** @brief OpenGL internal format ID */
+        inline constexpr operator GLint() const { return internalFormat; }
+
+    private:
+        GLint internalFormat;
+};
+
+/** @brief Convertor of component count and data type to InternalFormat */
+inline AbstractTexture::InternalFormat operator|(AbstractTexture::Components components, AbstractTexture::ComponentType type) {
+    return AbstractTexture::InternalFormat(components, type);
+}
+/** @brief Convertor of component count and data type to InternalFormat */
+inline AbstractTexture::InternalFormat operator|(AbstractTexture::ComponentType type, AbstractTexture::Components components) {
+    return AbstractTexture::InternalFormat(components, type);
+}
+
 #ifndef DOXYGEN_GENERATING_OUTPUT
 template<> struct AbstractTexture::DataHelper<1> {
-    inline constexpr static GLenum target() { return GL_TEXTURE_1D; }
+    enum class Target: GLenum {
+        Texture1D = GL_TEXTURE_1D
+    };
 
-    inline static void set(GLenum target, GLint mipLevel, InternalFormat internalFormat, const Math::Vector<GLsizei, 1>& dimensions, ColorFormat colorFormat, GLenum type, const void* data) {
-        glTexImage1D(target, mipLevel, static_cast<GLint>(internalFormat), dimensions.at(0), 0, static_cast<GLenum>(colorFormat), type, data);
+    inline constexpr static Target target() { return Target::Texture1D; }
+
+    inline static void setWrapping(Target target, const Math::Vector<Wrapping, 1>& wrapping) {
+        glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_WRAP_S, static_cast<GLint>(wrapping.at(0)));
     }
 
-    inline static void setSub(GLenum target, GLint mipLevel, const Math::Vector<GLint, 1>& offset, const Math::Vector<GLsizei, 1>& dimensions, ColorFormat colorFormat, GLenum type, const void* data) {
-        glTexSubImage1D(target, mipLevel, offset.at(0), dimensions.at(0), static_cast<GLenum>(colorFormat), type, data);
+    template<class T> inline static void set(Target target, GLint mipLevel, InternalFormat internalFormat, T* image) {
+        glTexImage1D(static_cast<GLenum>(target), mipLevel, internalFormat, image->dimensions().at(0), 0, static_cast<GLenum>(image->components()), static_cast<GLenum>(image->type()), image->data());
+    }
+
+    template<class T> inline static void setSub(Target target, GLint mipLevel, const Math::Vector<GLint, 1>& offset, T* image) {
+        glTexSubImage1D(static_cast<GLenum>(target), mipLevel, offset.at(0), image->dimensions().at(0), static_cast<GLenum>(image->components()), static_cast<GLenum>(image->type()), image->data());
     }
 };
 template<> struct AbstractTexture::DataHelper<2> {
-    inline constexpr static GLenum target() { return GL_TEXTURE_2D; }
+    enum class Target: GLenum {
+        Texture2D = GL_TEXTURE_2D,
+        Array1D = GL_TEXTURE_1D_ARRAY,
+        Rectangle = GL_TEXTURE_RECTANGLE,
+        CubeMap = GL_TEXTURE_CUBE_MAP,
+        CubeMapPositiveX = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        CubeMapNegativeX = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+        CubeMapPositiveY = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+        CubeMapNegativeY = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        CubeMapPositiveZ = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+        CubeMapNegativeZ = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+    };
 
-    inline static void set(GLenum target, GLint mipLevel, InternalFormat internalFormat, const Math::Vector<GLsizei, 2>& dimensions, ColorFormat colorFormat, GLenum type, const void* data) {
-        glTexImage2D(target, mipLevel, static_cast<GLint>(internalFormat), dimensions.at(0), dimensions.at(1), 0, static_cast<GLenum>(colorFormat), type, data);
+    inline constexpr static Target target() { return Target::Texture2D; }
+
+    inline static void setWrapping(Target target, const Math::Vector<Wrapping, 2>& wrapping) {
+        glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_WRAP_S, static_cast<GLint>(wrapping.at(0)));
+        glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_WRAP_T, static_cast<GLint>(wrapping.at(1)));
     }
 
-    inline static void setSub(GLenum target, GLint mipLevel, const Math::Vector<GLint, 2>& offset, const Math::Vector<GLsizei, 2>& dimensions, ColorFormat colorFormat, GLenum type, const void* data) {
-        glTexSubImage2D(target, mipLevel, offset.at(0), offset.at(1), dimensions.at(0), dimensions.at(1), static_cast<GLenum>(colorFormat), type, data);
+    template<class T> inline static void set(Target target, GLint mipLevel, InternalFormat internalFormat, T* image) {
+        glTexImage2D(static_cast<GLenum>(target), mipLevel, internalFormat, image->dimensions().at(0), image->dimensions().at(1), 0, static_cast<GLenum>(image->components()), static_cast<GLenum>(image->type()), image->data());
+    }
+
+    template<class T> inline static void setSub(Target target, GLint mipLevel, const Math::Vector<GLint, 2>& offset, T* image) {
+        glTexSubImage2D(static_cast<GLenum>(target), mipLevel, offset.at(0), offset.at(1), image->dimensions().at(0), image->dimensions().at(1), static_cast<GLenum>(image->components()), static_cast<GLenum>(image->type()), image->data());
     }
 };
 template<> struct AbstractTexture::DataHelper<3> {
-    inline constexpr static GLenum target() { return GL_TEXTURE_3D; }
+    enum class Target: GLenum {
+        Texture3D = GL_TEXTURE_3D,
+        Array2D = GL_TEXTURE_2D_ARRAY
+    };
 
-    inline static void set(GLenum target, GLint mipLevel, InternalFormat internalFormat, const Math::Vector<GLsizei, 3>& dimensions, ColorFormat colorFormat, GLenum type, const void* data) {
-        glTexImage3D(target, mipLevel, static_cast<GLint>(internalFormat), dimensions.at(0), dimensions.at(1), dimensions.at(2), 0, static_cast<GLenum>(colorFormat), type, data);
+    inline constexpr static Target target() { return Target::Texture3D; }
+
+    inline static void setWrapping(Target target, const Math::Vector<Wrapping, 3>& wrapping) {
+        glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_WRAP_S, static_cast<GLint>(wrapping.at(0)));
+        glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_WRAP_T, static_cast<GLint>(wrapping.at(1)));
+        glTexParameteri(static_cast<GLenum>(target), GL_TEXTURE_WRAP_R, static_cast<GLint>(wrapping.at(2)));
     }
 
-    inline static void setSub(GLenum target, GLint mipLevel, const Math::Vector<GLint, 3>& offset, const Math::Vector<GLsizei, 3>& dimensions, ColorFormat colorFormat, GLenum type, const void* data) {
-        glTexSubImage3D(target, mipLevel, offset.at(0), offset.at(1), offset.at(2), dimensions.at(0), dimensions.at(1), dimensions.at(2), static_cast<GLenum>(colorFormat), type, data);
+    template<class T> inline static void set(Target target, GLint mipLevel, InternalFormat internalFormat, T* image) {
+        glTexImage3D(static_cast<GLenum>(target), mipLevel, internalFormat, image->dimensions().at(0), image->dimensions().at(1), image->dimensions().at(2), 0, static_cast<GLenum>(image->components()), static_cast<GLenum>(image->type()), image->data());
+    }
+
+    template<class T> inline static void setSub(Target target, GLint mipLevel, const Math::Vector<GLint, 3>& offset, T* image) {
+        glTexSubImage3D(static_cast<GLenum>(target), mipLevel, offset.at(0), offset.at(1), offset.at(2), image->dimensions().at(0), image->dimensions().at(1), image->dimensions().at(2), static_cast<GLenum>(image->components()), static_cast<GLenum>(image->type()), image->data());
     }
 };
 #endif

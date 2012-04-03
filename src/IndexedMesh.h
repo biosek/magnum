@@ -31,23 +31,22 @@ class MAGNUM_EXPORT IndexedMesh: public Mesh {
     public:
         /**
          * @brief Implicit constructor
+         * @param primitive     Primitive type
          *
          * Allows creating the object without knowing anything about mesh data.
-         * Note that you have to call setPrimitive(), setVertexCount(),
-         * setIndexCount() and setIndexType() manually for mesh to draw
-         * properly.
+         * Note that you have to call setVertexCount(), setIndexCount() and
+         * setIndexType() manually for mesh to draw properly.
          */
-        inline IndexedMesh(): _indexBuffer(Buffer::ElementArrayBuffer), _indexCount(0), _indexType(GL_UNSIGNED_SHORT) {}
+        inline IndexedMesh(Primitive primitive = Primitive::Triangles): Mesh(primitive), _indexBuffer(Buffer::Target::ElementArray), _indexCount(0), _indexType(Type::UnsignedShort) {}
 
         /**
          * @brief Constructor
          * @param primitive     Primitive type
          * @param vertexCount   Count of unique vertices
          * @param indexCount    Count of indices
-         * @param indexType     Type of indices (GL_UNSIGNED_BYTE,
-         *      GL_UNSIGNED_SHORT or GL_UNSIGNED_INT)
+         * @param indexType     Type of indices (indexable, see TypeTraits)
          */
-        inline IndexedMesh(Primitive primitive, GLsizei vertexCount, GLsizei indexCount, GLenum indexType = GL_UNSIGNED_SHORT): Mesh(primitive, vertexCount), _indexBuffer(Buffer::ElementArrayBuffer), _indexCount(indexCount), _indexType(indexType) {}
+        inline IndexedMesh(Primitive primitive, GLsizei vertexCount, GLsizei indexCount, Type indexType = Type::UnsignedShort): Mesh(primitive, vertexCount), _indexBuffer(Buffer::Target::ElementArray), _indexCount(indexCount), _indexType(indexType) {}
 
         /** @brief Index count */
         inline GLsizei indexCount() const { return _indexCount; }
@@ -56,10 +55,10 @@ class MAGNUM_EXPORT IndexedMesh: public Mesh {
         inline void setIndexCount(GLsizei count) { _indexCount = count; }
 
         /** @brief Index type */
-        inline GLenum indexType() const { return _indexType; }
+        inline Type indexType() const { return _indexType; }
 
         /** @brief Set index type */
-        inline void setIndexType(GLsizei type) { _indexType = type; }
+        inline void setIndexType(Type type) { _indexType = type; }
 
         /**
          * @brief Index buffer
@@ -75,12 +74,15 @@ class MAGNUM_EXPORT IndexedMesh: public Mesh {
          * Binds attributes to buffers, bind index buffer and draws the mesh.
          * Expects an active shader with all uniforms set.
          */
-        virtual void draw();
+        void draw();
+
+    protected:
+        void finalize();
 
     private:
         Buffer _indexBuffer;
         GLsizei _indexCount;
-        GLenum _indexType;
+        Type _indexType;
 };
 
 }

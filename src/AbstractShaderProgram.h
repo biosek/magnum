@@ -22,7 +22,8 @@
 #include <map>
 
 #include "Shader.h"
-#include "Texture.h"
+#include "AbstractTexture.h"
+#include "BufferedTexture.h"
 
 namespace Magnum {
 
@@ -31,18 +32,16 @@ namespace Magnum {
 
 This class is designed to be used via subclassing. Subclasses define these
 functions and properties:
- - <strong>Attribute location</strong> enum with indexes where the particular
-   attribute is bound, for example:
+ - **Attribute location** typedefs defining locations and types for attribute
+   binding with Mesh::bindAttribute(), for example:
 @code
-enum Attribute {
-    Vertex = 1,
-    Normal = 2,
-    TextureCoords = 3,
-};
+typedef Attribute<0, Vector4> Vertex;
+typedef Attribute<1, Vector3> Normal;
+typedef Attribute<2, Vector2> TextureCoords;
 @endcode
    See also bindAttribute().
- - @b Constructor, which attaches particular shaders, links the program, binds
-   attribute locations and gets uniform locations, for example:
+ - **Constructor**, which attaches particular shaders, links the program,
+   binds attribute locations and gets uniform locations, for example:
 @code
     // Load shaders from file and attach them to the program
     Shader* vertexShader = Shader::fromFile(Shader::Vertex, "PhongShader.vert");
@@ -51,9 +50,9 @@ enum Attribute {
     attachShader(fragmentShader);
 
     // Bind attribute names to IDs
-    bindAttribute(Vertex, "vertex");
-    bindAttribute(Normal, "normal");
-    bindAttribute(TextureCoords, "textureCoords");
+    bindAttribute(Vertex::Location, "vertex");
+    bindAttribute(Normal::Location, "normal");
+    bindAttribute(TextureCoords::Location, "textureCoords");
 
     // Link, then delete now uneeded shaders
     link();
@@ -65,7 +64,7 @@ enum Attribute {
     projectionMatrixUniform = uniformLocation("projectionMatrix");
     // more uniforms like light location, colors etc.
 @endcode
- - <strong>Uniform binding functions</strong>, which set shader uniforms with
+ - **Uniform binding functions**, which set shader uniforms using
    setUniform() and setUniformArray() functions. Example:
 @code
 void setTransformationMatrixUniform(const Matrix4& matrix) {
@@ -76,6 +75,18 @@ void setTransformationMatrixUniform(const Matrix4& matrix) {
 Basic workflow with AbstractShaderProgram subclasses is: instancing the class
 (once at the beginning), then in every frame calling use(), setting uniforms
 and calling Mesh::draw() (see its documentation for more).
+
+@section MultipleFragmentOutputs Multiple fragment shader outputs
+If your shader uses multiple fragment outputs, you can use
+bindFragmentDataLocation() *before linking* to bind their names to desired
+location, e.g.:
+@code
+bindFragmentDataLocation(0, "color");
+@endcode
+
+You should then clearly state in the documentation which output is on what
+position, so the user can set framebuffer attachments for them using
+Framebuffer::mapForDraw() or Framebuffer::mapDefaultForDraw().
  */
 class MAGNUM_EXPORT AbstractShaderProgram {
     AbstractShaderProgram(const AbstractShaderProgram& other) = delete;
@@ -84,6 +95,17 @@ class MAGNUM_EXPORT AbstractShaderProgram {
     AbstractShaderProgram& operator=(AbstractShaderProgram&& other) = delete;
 
     public:
+        /**
+         * @brief Base struct for attribute location and type
+         *
+         * See AbstractShaderProgram documentation or Mesh::bindAttribute()
+         * for an example.
+         */
+        template<size_t i, class T> struct Attribute {
+            static const size_t Location = i;   /**< Location to which the attribute is bound */
+            typedef T Type;                     /**< %Attribute type */
+        };
+
         /** @brief Default constructor */
         AbstractShaderProgram();
 
@@ -117,15 +139,23 @@ class MAGNUM_EXPORT AbstractShaderProgram {
          * @brief Bind attribute to given location
          * @param location      Location
          * @param name          Attribute name
-         * @return False if the location or name is already bound, true
-         * otherwise.
          *
-         * Binds attribute to the location which can be used later when binding
+         * Binds attribute to location which is be used later for binding
          * vertex buffers.
          * @note This function should be called between loadShader() calls
          * and link().
          */
-        bool bindAttribute(GLuint location, const std::string& name);
+        void bindAttribute(GLuint location, const std::string& name);
+
+        /**
+         * @brief Bind fragment data to given location
+         * @param location      Location
+         * @param name          Fragment output variable name
+         *
+         * @note This function should be called between loadShader() calls
+         * and link().
+         */
+        void bindFragmentDataLocation(GLuint location, const std::string& name);
 
         /**
          * @brief Link the shader
@@ -189,6 +219,11 @@ class MAGNUM_EXPORT AbstractShaderProgram {
             setUniform(location, value->layer());
         }
 
+        /** @copydoc setUniform(GLint, GLint) */
+        void setUniform(GLint location, const BufferedTexture* value) {
+            setUniform(location, value->layer());
+        }
+
     private:
         enum State {
             Initialized,
@@ -198,7 +233,6 @@ class MAGNUM_EXPORT AbstractShaderProgram {
 
         GLuint program;
         State state;
-        std::map<GLuint, std::string> attributes;
 };
 
 }

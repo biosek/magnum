@@ -16,10 +16,14 @@
 */
 
 /** @file
- * @brief Class Magnum::MeshTools::Clean
+ * @brief Class Magnum::MeshTools::Clean, function Magnum::MeshTools::clean()
  */
 
-#include "AbstractTool.h"
+#include <unordered_map>
+#include <limits>
+
+#include "Utility/MurmurHash2.h"
+#include "TypeTraits.h"
 
 namespace Magnum { namespace MeshTools {
 
@@ -28,18 +32,22 @@ namespace Magnum { namespace MeshTools {
 
 See clean() for full documentation.
 */
-template<class Vertex, size_t vertexSize = Vertex::Size> class Clean: public AbstractTool<Vertex> {
+template<class Vertex, size_t vertexSize = Vertex::Size> class Clean {
     public:
-        /** @copydoc AbstractTool::AbstractTool() */
-        inline Clean(MeshBuilder<Vertex>& builder): AbstractTool<Vertex>(builder) {}
+        /**
+         * @brief Constructor
+         *
+         * See clean() for full documentation.
+         */
+        inline Clean(std::vector<unsigned int>& indices, std::vector<Vertex>& vertices): indices(indices), vertices(vertices) {}
 
         /**
          * @brief Functor
          *
          * See clean() for full documentation.
          */
-        void run(typename Vertex::Type epsilon = TypeTraits<typename Vertex::Type>::epsilon()) {
-            if(this->indices.empty()) return;
+        void operator()(typename Vertex::Type epsilon = TypeTraits<typename Vertex::Type>::epsilon()) {
+            if(indices.empty()) return;
 
             /* Get mesh bounds */
             Vertex min, max;
@@ -47,7 +55,7 @@ template<class Vertex, size_t vertexSize = Vertex::Size> class Clean: public Abs
                 min[i] = std::numeric_limits<typename Vertex::Type>::max();
                 max[i] = std::numeric_limits<typename Vertex::Type>::min();
             }
-            for(auto it = this->vertices.cbegin(); it != this->vertices.cend(); ++it)
+            for(auto it = vertices.cbegin(); it != vertices.cend(); ++it)
                 for(size_t i = 0; i != vertexSize; ++i)
                     if((*it)[i] < min[i])
                         min[i] = (*it)[i];
@@ -67,32 +75,32 @@ template<class Vertex, size_t vertexSize = Vertex::Size> class Clean: public Abs
             for(size_t moving = 0; moving <= vertexSize; ++moving) {
 
                 /* Under each index is pointer to face which contains given vertex
-                and index of vertex in the face. */
+                   and index of vertex in the face. */
                 std::unordered_map<Math::Vector<size_t, vertexSize>, HashedVertex, IndexHash> table;
 
                 /* Reserve space for all vertices */
-                table.reserve(this->vertices.size());
+                table.reserve(vertices.size());
 
                 /* Go through all faces' vertices */
-                for(auto it = this->indices.begin(); it != this->indices.end(); ++it) {
+                for(auto it = indices.begin(); it != indices.end(); ++it) {
                     /* Index of a vertex in vertexSize-dimensional table */
                     size_t index[vertexSize];
                     for(size_t ii = 0; ii != vertexSize; ++ii)
-                        index[ii] = (this->vertices[*it][ii]+moved[ii]-min[ii])/epsilon;
+                        index[ii] = (vertices[*it][ii]+moved[ii]-min[ii])/epsilon;
 
                     /* Try inserting the vertex into table, if it already
                         exists, change vertex pointer of the face to already
                         existing vertex */
                     HashedVertex v(*it, table.size());
-                    auto result = table.insert(std::pair<Math::Vector<size_t, vertexSize>, HashedVertex>(index, v));
+                    auto result = table.insert(std::pair<Math::Vector<size_t, vertexSize>, HashedVertex>(Math::Vector<size_t, vertexSize>::from(index), v));
                     *it = result.first->second.newIndex;
                 }
 
                 /* Shrink vertices array */
                 std::vector<Vertex> newVertices(table.size());
                 for(auto it = table.cbegin(); it != table.cend(); ++it)
-                    newVertices[it->second.newIndex] = this->vertices[it->second.oldIndex];
-                std::swap(newVertices, this->vertices);
+                    newVertices[it->second.newIndex] = vertices[it->second.oldIndex];
+                std::swap(newVertices, vertices);
 
                 /* Move vertex coordinates by epsilon/2 in next direction */
                 if(moving != Vertex::Size) {
@@ -106,10 +114,7 @@ template<class Vertex, size_t vertexSize = Vertex::Size> class Clean: public Abs
         class IndexHash {
             public:
                 inline size_t operator()(const Math::Vector<size_t, vertexSize>& data) const {
-                    size_t a = 0;
-                    for(size_t i = 0; i != vertexSize; ++i)
-                        a ^= data[i];
-                    return a;
+                    return *reinterpret_cast<const size_t*>(Corrade::Utility::MurmurHash2()(reinterpret_cast<const char*>(&data), sizeof(data)).byteArray());
                 }
         };
 
@@ -118,38 +123,41 @@ template<class Vertex, size_t vertexSize = Vertex::Size> class Clean: public Abs
 
             HashedVertex(unsigned int oldIndex, unsigned int newIndex): oldIndex(oldIndex), newIndex(newIndex) {}
         };
+
+        std::vector<unsigned int>& indices;
+        std::vector<Vertex>& vertices;
 };
 
 /**
 @brief %Clean the mesh
-@tparam Vertex      Vertex data type (the same as in MeshBuilder)
+@tparam Vertex      Vertex data type
 @tparam vertexSize  How many initial vertex fields are important (for example,
     when dealing with perspective in 3D space, only first three fields of
     otherwise 4D vertex are important)
-@param builder       %Mesh builder to operate on
-@param epsilon       Epsilon value, vertices nearer than this
-    distance will be melt together.
+@param indices      Index array to operate on
+@param vertices     Vertex array to operate on
+@param epsilon      Epsilon value, vertices nearer than this distance will be
+    melt together.
 
 Removes duplicate vertices from the mesh.
 
 This is convenience function supplementing direct usage of Clean class,
 instead of
 @code
-MeshBuilder<T> builder;
-MeshTools::Clean<T>(builder).run(epsilon);
+MeshTools::Clean<T>(indices, vertices)(epsilon);
 @endcode
 you can just write
 @code
-MeshTools::clean(builder, epsilon);
+MeshTools::clean(indices, vertices, epsilon);
 @endcode
-However, when you want to specify @c vertexSize template parameter, you have
+However, when you want to specify `vertexSize` template parameter, you have
 to explicitly specify both of them:
 @code
-MeshTools::clean<T, 3>(builder, epsilon);
+MeshTools::clean<T, 3>(indices, vertices, epsilon);
 @endcode
 */
-template<class Vertex, size_t vertexSize = Vertex::Size> inline void clean(MeshBuilder<Vertex>& builder, typename Vertex::Type epsilon = TypeTraits<typename Vertex::Type>::epsilon()) {
-    Clean<Vertex, vertexSize>(builder).run(epsilon);
+template<class Vertex, size_t vertexSize = Vertex::Size> inline void clean(std::vector<unsigned int>& indices, std::vector<Vertex>& vertices, typename Vertex::Type epsilon = TypeTraits<typename Vertex::Type>::epsilon()) {
+    Clean<Vertex, vertexSize>(indices, vertices)(epsilon);
 }
 
 }}

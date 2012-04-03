@@ -44,7 +44,7 @@ class MAGNUM_EXPORT Mesh {
 
     public:
         /** @brief Primitive type */
-        enum Primitive {
+        enum class Primitive: GLenum {
             /**
              * Single points
              */
@@ -86,12 +86,13 @@ class MAGNUM_EXPORT Mesh {
 
         /**
          * @brief Implicit constructor
+         * @param primitive     Primitive type
          *
-         * Allows creating the object without knowing anything about mesh data.
-         * Note that you have to call setPrimitive() and setVertexCount()
-         * manually for mesh to draw properly.
+         * Allows creating the object without knowing anything about mesh
+         * data. Note that you have to call setVertexCount() manually for mesh
+         * to draw properly.
          */
-        inline Mesh(): _primitive(Triangles), _vertexCount(0), finalized(false) {}
+        inline Mesh(Primitive primitive = Primitive::Triangles): _primitive(primitive), _vertexCount(0), finalized(false) {}
 
         /**
          * @brief Constructor
@@ -141,23 +142,37 @@ class MAGNUM_EXPORT Mesh {
          *      every vertex will be in one continuous place.
          *
          * Adds new buffer to the mesh. The buffer can be then filled with
-         * Buffer::setData().
+         * Buffer::setData(). See also isInterleaved().
+         *
+         * @todo Move interleaveability to Buffer itself?
          */
         Buffer* addBuffer(bool interleaved);
 
         /**
+         * @brief Whether given buffer is interleaved
+         * @return True if the buffer belongs to the mesh and the buffer is
+         *      interleaved, false otherwise.
+         *
+         * See also addBuffer().
+         */
+        inline bool isInterleaved(Buffer* buffer) const {
+            auto found = _buffers.find(buffer);
+            return found != _buffers.end() && found->second.first;
+        }
+
+        /**
          * @brief Bind attribute
+         * @tparam attribute    Attribute, defined in the shader
          * @param buffer        Buffer where bind the attribute to (pointer
          *      returned by addBuffer())
-         * @param attribute     Attribute
          *
          * Binds attribute of given type with given buffer. If the attribute is
          * already bound, given buffer isn't managed with this mesh (wasn't
          * initialized with addBuffer) or the mesh was already drawn, the
          * function does nothing.
          */
-        template<class T> inline void bindAttribute(Buffer* buffer, GLuint attribute) {
-            bindAttribute(buffer, attribute, TypeTraits<T>::count(), TypeTraits<T>::glType());
+        template<class Attribute> inline void bindAttribute(Buffer* buffer) {
+            bindAttribute(buffer, Attribute::Location, TypeTraits<typename Attribute::Type>::count(), TypeTraits<typename Attribute::Type>::type());
         }
 
         /**
@@ -171,9 +186,9 @@ class MAGNUM_EXPORT Mesh {
     protected:
         /** @brief Vertex attribute */
         struct Attribute {
-            GLuint attribute;           /**< @brief Attribute ID */
-            GLint size;                 /**< @brief How many items of @c type are in the attribute */
-            GLenum type;                /**< @brief Attribute item type */
+            GLuint attribute;           /**< @brief %Attribute ID */
+            GLint size;                 /**< @brief How many items of `type` are in the attribute */
+            Type type;                  /**< @brief %Attribute item type */
             GLsizei stride;             /**< @brief Distance of two adjacent attributes of this type in interleaved buffer */
             const GLvoid* pointer;      /**< @brief Pointer to first attribute of this type in the buffer */
         };
@@ -199,7 +214,7 @@ class MAGNUM_EXPORT Mesh {
          * Computes location and stride of each attribute in its buffer. After
          * this function is called, no new attribute can be bound.
          */
-        void finalize();
+        virtual void finalize();
 
         /**
          * @brief Set the mesh dirty
@@ -217,9 +232,7 @@ class MAGNUM_EXPORT Mesh {
         std::map<Buffer*, std::pair<bool, std::vector<Attribute> > > _buffers;
         std::set<GLuint> _attributes;
 
-        void bindAttribute(Buffer* buffer, GLuint attribute, GLint size, GLenum type);
-
-        GLsizei sizeOf(GLenum type);
+        void bindAttribute(Buffer* buffer, GLuint attribute, GLint size, Type type);
 };
 
 }

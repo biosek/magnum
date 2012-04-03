@@ -9,19 +9,22 @@ add_subdirectory(Shaders)
 
 set(Magnum_SRCS
     Object.cpp
+    AbstractImage.cpp
     AbstractTexture.cpp
     AbstractShaderProgram.cpp
     Camera.cpp
+    Framebuffer.cpp
     IndexedMesh.cpp
     Light.cpp
     Mesh.cpp
+    Renderbuffer.cpp
     Scene.cpp
     Shader.cpp
     SizeTraits.cpp
-    Texture.cpp
+    TypeTraits.cpp
 
     Trade/AbstractImporter.cpp
-    Trade/Mesh.cpp
+    Trade/MeshData.cpp
 
     Math/Math.cpp
 )

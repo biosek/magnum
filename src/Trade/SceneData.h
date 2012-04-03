@@ -1,5 +1,5 @@
-#ifndef Magnum_Trade_Object_h
-#define Magnum_Trade_Object_h
+#ifndef Magnum_Trade_SceneData_h
+#define Magnum_Trade_SceneData_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -16,36 +16,34 @@
 */
 
 /** @file
- * @brief Class Magnum::Trade::Object
+ * @brief Class Magnum::Trade::SceneData
  */
 
-#include "Magnum.h"
+#include <vector>
 
 namespace Magnum { namespace Trade {
 
 /**
-@brief Object
-
-Provides access to object transformation and hierarchy.
+@brief %Scene data
 */
-struct MAGNUM_EXPORT Object {
-    Object(const Object& other) = delete;
-    Object(Object&& other) = delete;
-    Object& operator=(const Object& other) = delete;
-    Object& operator=(Object&& other) = delete;
+class MAGNUM_EXPORT SceneData {
+    SceneData(const SceneData& other) = delete;
+    SceneData(SceneData&& other) = delete;
+    SceneData& operator=(const SceneData& other) = delete;
+    SceneData& operator=(SceneData&& other) = delete;
 
     public:
         /**
          * @brief Constructor
+         * @param children  Child objects
          */
-        Object(size_t parent, const Matrix4& transformation): _parent(parent), _transformation(transformation) {}
+        inline SceneData(const std::vector<size_t>& children): _children(children) {}
 
-        inline size_t parent() const { return _parent; }
-        inline size_t transformation() const { return _transformation; }
+        /** @brief Child objects */
+        inline const std::vector<size_t>& children() const { return _children; }
 
     private:
-        size_t _parent;
-        Matrix4 _transformation;
+        std::vector<size_t> _children;
 };
 
 }}

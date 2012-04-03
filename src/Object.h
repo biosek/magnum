@@ -62,7 +62,7 @@ class MAGNUM_EXPORT Object {
         virtual ~Object();
 
         /**
-         * @brief Scene
+         * @brief %Scene
          * @return If the object is not assigned to any scene, returns nullptr.
          */
         Scene* scene() const;
@@ -134,11 +134,6 @@ class MAGNUM_EXPORT Object {
             multiplyTransformation(Matrix4::translation(vec), global);
         }
 
-        /** @copydoc translate(Vector3, bool) */
-        inline void translate(GLfloat x, GLfloat y, GLfloat z, bool global = true) {
-            translate(Vector3(x, y, z), global);
-        }
-
         /**
          * @brief Scale object
          *
@@ -148,9 +143,14 @@ class MAGNUM_EXPORT Object {
             multiplyTransformation(Matrix4::scaling(vec), global);
         }
 
-        /** @copydoc scale(Vector3, bool) */
-        inline void scale(GLfloat x, GLfloat y, GLfloat z, bool global = true) {
-            scale(Vector3(x, y, z), global);
+        /**
+         * @copydoc scale(Vector3, bool)
+         *
+         * Scales the object proportionally in all dimensions.
+         * @todo Make this functionality in Math::Vector3?
+         */
+        inline void scale(GLfloat xyz, bool global = true) {
+            scale({xyz, xyz, xyz}, global);
         }
 
         /**
@@ -160,11 +160,6 @@ class MAGNUM_EXPORT Object {
          */
         inline void rotate(GLfloat angle, Vector3 vec, bool global = true) {
             multiplyTransformation(Matrix4::rotation(angle, vec), global);
-        }
-
-        /** @copydoc rotate(GLfloat, Vector3, bool) */
-        inline void rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z, bool global = true) {
-            rotate(angle, Vector3(x, y, z), global);
         }
 
         /** @{ @name Caching helpers

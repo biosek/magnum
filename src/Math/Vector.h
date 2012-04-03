@@ -19,7 +19,6 @@
  * @brief Class Magnum::Math::Vector
  */
 
-#include <cstring>
 #include <cmath>
 
 #include "Utility/Debug.h"
@@ -27,11 +26,32 @@
 
 namespace Magnum { namespace Math {
 
-/** @brief %Vector */
+/**
+@brief %Vector
+
+@todo Swizzling
+*/
 template<class T, size_t size> class Vector {
     public:
-        typedef T Type;                     /**< @brief Vector data type */
-        const static size_t Size = size;    /**< @brief Vector size */
+        typedef T Type;                     /**< @brief %Vector data type */
+        const static size_t Size = size;    /**< @brief %Vector size */
+
+        /**
+         * @brief Vector from array
+         * @return Reference to the data as if it was Vector, thus doesn't
+         *      perform any copying.
+         *
+         * @attention Use with caution, the function doesn't check whether the
+         *      array is long enough.
+         */
+        inline constexpr static Vector<T, size>& from(T* data) {
+            return *reinterpret_cast<Vector<T, size>*>(data);
+        }
+
+        /** @copydoc from(T*) */
+        inline constexpr static const Vector<T, size>& from(const T* data) {
+            return *reinterpret_cast<Vector<T, size>*>(data);
+        }
 
         /** @brief Angle between vectors */
         inline static T angle(const Vector<T, size>& a, const Vector<T, size>& b) {
@@ -39,46 +59,36 @@ template<class T, size_t size> class Vector {
         }
 
         /** @brief Default constructor */
-        inline Vector() {
-            memset(_data, 0, size*sizeof(T));
-        };
+        inline constexpr Vector(): _data() {}
 
         /**
-         * @brief Constructor
-         * @param data  Array of @c size length.
+         * @brief Initializer-list constructor
+         * @param first First value
+         * @param next  Next values
          */
-        inline Vector(const T* data) { setData(data); }
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        template<class ...U> inline constexpr Vector(T first, U&&... next): _data{first, std::forward<U>(next)...} {}
+        #else
+        template<class ...U> inline constexpr Vector(T first, U&&... next);
+        #endif
 
         /** @brief Copy constructor */
-        inline Vector(const Vector<T, size>& other) {
-            setData(other.data());
-        }
+        inline constexpr Vector(const Vector<T, size>& other) = default;
 
         /** @brief Assignment operator */
-        inline Vector<T, size>& operator=(const Vector<T, size>& other) {
-            if(&other != this) setData(other.data());
-            return *this;
-        }
+        inline Vector<T, size>& operator=(const Vector<T, size>& other) = default;
 
         /**
          * @brief Raw data
-         * @return Array of @c size length.
+         * @return Array with the same size as the vector
          */
-        inline const T* data() const { return _data; }
-
-        /**
-         * @brief Set raw data
-         * @param data Array of @c size length.
-         */
-        inline void setData(const T* data) {
-            memcpy(_data, data, size*sizeof(T));
-        }
+        inline constexpr const T* data() const { return _data; }
 
         /** @brief Value at given position */
-        inline T at(size_t pos) const { return _data[pos]; }
+        inline constexpr T at(size_t pos) const { return _data[pos]; }
 
         /** @brief Value at given position */
-        inline T operator[](size_t pos) const { return _data[pos]; }
+        inline constexpr T operator[](size_t pos) const { return _data[pos]; }
 
         /** @brief Reference to value at given position */
         inline T& operator[](size_t pos) { return _data[pos]; }
@@ -113,43 +123,71 @@ template<class T, size_t size> class Vector {
         }
 
         /** @brief Multiply vector */
-        Vector<T, size> operator*(T number) const {
-            Vector<T, size> out;
+        inline Vector<T, size> operator*(T number) const {
+            return Vector<T, size>(*this)*=number;
+        }
 
+        /**
+         * @brief Multiply and assign vector
+         *
+         * More efficient than operator*(), because it does the computation
+         * in-place.
+         */
+        Vector<T, size>& operator*=(T number) {
             for(size_t i = 0; i != size; ++i)
-                out.set(i, at(i)*number);
-
-            return out;
+                set(i, at(i)*number);
+            return *this;
         }
 
         /** @brief Divide vector */
-        Vector<T, size> operator/(T number) const {
-            Vector<T, size> out;
+        inline Vector<T, size> operator/(T number) const {
+            return Vector<T, size>(*this)/=number;
+        }
 
+        /**
+         * @brief Divide and assign vector
+         *
+         * More efficient than operator/(), because it does the computation
+         * in-place.
+         */
+        Vector<T, size>& operator/=(T number) {
             for(size_t i = 0; i != size; ++i)
-                out.set(i, at(i)/number);
-
-            return out;
+                set(i, at(i)/number);
+            return *this;
         }
 
         /** @brief Add two vectors */
-        Vector<T, size> operator+(const Vector<T, size>& other) const {
-            Vector<T, size> out;
+        inline Vector<T, size> operator+(const Vector<T, size>& other) const {
+            return Vector<T, size>(*this)+=other;
+        }
 
+        /**
+         * @brief Add and assign vector
+         *
+         * More efficient than operator+(), because it does the computation
+         * in-place.
+         */
+        Vector<T, size>& operator+=(const Vector<T, size>& other) {
             for(size_t i = 0; i != size; ++i)
-                out.set(i, at(i)+other.at(i));
-
-            return out;
+                set(i, at(i)+other.at(i));
+            return *this;
         }
 
         /** @brief Substract two vectors */
-        Vector<T, size> operator-(const Vector<T, size>& other) const {
-            Vector<T, size> out;
+        inline Vector<T, size> operator-(const Vector<T, size>& other) const {
+            return Vector<T, size>(*this)-=other;
+        }
 
+        /**
+         * @brief Substract and assign vector
+         *
+         * More efficient than operator-(), because it does the computation
+         * in-place.
+         */
+        Vector<T, size>& operator-=(const Vector<T, size>& other) {
             for(size_t i = 0; i != size; ++i)
-                out.set(i, at(i)-other.at(i));
-
-            return out;
+                set(i, at(i)-other.at(i));
+            return *this;
         }
 
         /** @brief Negative vector */
@@ -162,7 +200,7 @@ template<class T, size_t size> class Vector {
             return out;
         }
 
-        /** @brief Vector length */
+        /** @brief %Vector length */
         inline T length() const {
             return sqrt(operator*(*this));
         }
@@ -170,6 +208,16 @@ template<class T, size_t size> class Vector {
         /** @brief Normalized vector (of length 1) */
         inline Vector<T, size> normalized() const {
             return *this/length();
+        }
+
+        /** @brief Product of values in the vector */
+        T product() const {
+            T out = 1;
+
+            for(size_t i = 0; i != size; ++i)
+                out *= at(i);
+
+            return out;
         }
 
     private:
