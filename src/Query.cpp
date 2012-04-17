@@ -65,7 +65,7 @@ void Query::end() {
 
     glEndQuery(castToUnderlyingType(*target));
     delete target;
-    target = 0;
+    target = nullptr;
 }
 
 void SampleQuery::begin(SampleQuery::Target target) {
@@ -78,7 +78,7 @@ void SampleQuery::end() {
 
     glEndQuery(castToUnderlyingType(*target));
     delete target;
-    target = 0;
+    target = nullptr;
 }
 
 }
