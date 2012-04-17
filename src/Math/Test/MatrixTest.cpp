@@ -50,10 +50,10 @@ void MatrixTest::construct() {
 }
 
 void MatrixTest::constructFromVectors() {
-    Matrix4 actual = Matrix4::from(Vector4(1.0f, 2.0f, 3.0f, 4.0f),
-                                   Vector4(5.0f, 6.0f, 7.0f, 8.0f),
-                                   Vector4(9.0f, 10.0f, 11.0f, 12.0f),
-                                   Vector4(13.0f, 14.0f, 15.0f, 16.0f));
+    Matrix4 actual = Matrix4(Vector4(1.0f, 2.0f, 3.0f, 4.0f),
+                             Vector4(5.0f, 6.0f, 7.0f, 8.0f),
+                             Vector4(9.0f, 10.0f, 11.0f, 12.0f),
+                             Vector4(13.0f, 14.0f, 15.0f, 16.0f));
 
     Matrix4 expected(1.0f, 2.0f, 3.0f, 4.0f,
                      5.0f, 6.0f, 7.0f, 8.0f,

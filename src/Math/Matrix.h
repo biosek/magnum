@@ -64,15 +64,6 @@ template<class T, size_t size> class Matrix {
         }
 
         /**
-         * @brief %Matrix from column vectors
-         * @param first First column vector
-         * @param next  Next column vectors
-         */
-        template<class ...U> inline constexpr static Matrix<T, size> from(const Vector<T, size>& first, const U&... next) {
-            return from(typename Implementation::GenerateSequence<size>::Type(), first, next...);
-        }
-
-        /**
          * @brief Default constructor
          * @param identity Create identity matrix instead of zero matrix.
          */
@@ -93,6 +84,17 @@ template<class T, size_t size> class Matrix {
         template<class ...U> inline constexpr Matrix(T first, U... next): _data{first, next...} {}
         #else
         template<class ...U> inline constexpr Matrix(T first, U... next);
+        #endif
+
+        /**
+         * @brief Initializer-list constructor from column vectors
+         * @param first First column vector
+         * @param next  Next column vectors
+         */
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        template<class ...U> inline constexpr Matrix(const Vector<T, size>& first, const U&... next): Matrix(typename Implementation::GenerateSequence<size>::Type(), first, next...) {}
+        #else
+        template<class ...U> inline constexpr Matrix(const Vector<T, size>& first, const U&... next);
         #endif
 
         /** @brief Copy constructor */
@@ -209,13 +211,9 @@ template<class T, size_t size> class Matrix {
         }
 
     private:
-        template<size_t ...sequence, class ...U> inline constexpr static Matrix<T, size> from(Implementation::Sequence<sequence...> s, const Vector<T, size>& first, U... next) {
-            return from(s, next..., first[sequence]...);
-        }
+        template<size_t ...sequence, class ...U> inline constexpr Matrix(Implementation::Sequence<sequence...> s, const Vector<T, size>& first, U... next): Matrix(s, next..., first[sequence]...) {}
 
-        template<size_t ...sequence, class ...U> inline constexpr static Matrix<T, size> from(Implementation::Sequence<sequence...> s, T first, U... next) {
-            return Matrix<T, size>(first, next...);
-        }
+        template<size_t ...sequence, class ...U> inline constexpr Matrix(Implementation::Sequence<sequence...> s, T first, U... next): Matrix(first, next...) {}
 
         T _data[size*size];
 };

@@ -43,11 +43,6 @@ template<class T> class Matrix4: public Matrix<T, 4> {
             return *reinterpret_cast<const Matrix4<T>*>(data);
         }
 
-        /** @copydoc Matrix::from(const Vector<T, size>&, const U&...) */
-        template<class ...U> inline constexpr static Matrix4<T> from(const Vector<T, 4>& first, const U&... next) {
-            return Matrix<T, 4>::from(first, next...);
-        }
-
         /**
          * @brief Translation matrix
          * @param vec   Translation vector
@@ -126,6 +121,13 @@ template<class T> class Matrix4: public Matrix<T, 4> {
         template<class ...U> inline constexpr Matrix4(T first, U&&... next) {}
         #endif
 
+        /** @copydoc Matrix::Matrix(const Vector<T, size>&, const U&...) */
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        template<class ...U> inline constexpr Matrix4(const Vector<T, 3>& first, const U&... next): Matrix<T, 4>(first, next...) {}
+        #else
+        template<class ...U> inline constexpr Matrix4(const Vector<T, 3>& first, const U&... next) {}
+        #endif
+
         /** @copydoc Matrix::Matrix(const Matrix<T, size>&) */
         inline constexpr Matrix4(const Matrix<T, 4>& other): Matrix<T, 4>(other) {}
 
@@ -161,10 +163,11 @@ template<class T> class Matrix4: public Matrix<T, 4> {
 
         /** @brief Rotation part of the matrix */
         inline Matrix3<T> rotation() const {
-            return Matrix3<T>::from(
+            return {
                 (*this)[0].xyz().normalized(),
                 (*this)[1].xyz().normalized(),
-                (*this)[2].xyz().normalized());
+                (*this)[2].xyz().normalized()
+            };
         }
 };
 
