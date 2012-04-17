@@ -105,20 +105,27 @@ template<class T> class Matrix4: public Matrix<T, 4> {
             );
         }
 
-        /** @copydoc Matrix::Matrix(bool) */
-        inline constexpr explicit Matrix4(bool identity = true): Matrix<T, 4>{
+        /** @copydoc Matrix::Matrix(ZeroType) */
+        inline constexpr explicit Matrix4(typename Matrix<T, 4>::ZeroType): Matrix<T, 3>(Matrix<T, 3>::Zero) {}
+
+        /** @copydoc Matrix::Matrix(IdentityType) */
+        inline constexpr explicit Matrix4(typename Matrix<T, 4>::IdentityType = Matrix<T, 4>::Identity): Matrix<T, 4>{
             /** @todo Make this in Matrix itself, after it will be constexpr */
-            identity ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, identity ? 1.0f : 0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, identity ? 1.0f : 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, identity ? 1.0f : 0.0f
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
         } {}
 
-        /** @copydoc Matrix::Matrix(T, U&&...) */
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        template<class U> explicit Matrix4(U) = delete;
+        #endif
+
+        /** @copydoc Matrix::Matrix(T, U...) */
         #ifndef DOXYGEN_GENERATING_OUTPUT
         template<class ...U> inline constexpr Matrix4(T first, U... next): Matrix<T, 4>(first, next...) {}
         #else
-        template<class ...U> inline constexpr Matrix4(T first, U&&... next) {}
+        template<class ...U> inline constexpr Matrix4(T first, U... next) {}
         #endif
 
         /** @copydoc Matrix::Matrix(const Vector<T, size>&, const U&...) */
