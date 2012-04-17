@@ -41,12 +41,7 @@ template<class T> class Matrix3: public Matrix<T, 3> {
         inline constexpr explicit Matrix3(typename Matrix<T, 3>::ZeroType): Matrix<T, 3>(Matrix<T, 3>::Zero) {}
 
         /** @copydoc Matrix::Matrix(IdentityType) */
-        inline constexpr explicit Matrix3(typename Matrix<T, 3>::IdentityType = Matrix<T, 3>::Identity): Matrix<T, 3>{
-            /** @todo Make this in Matrix itself, after it will be constexpr */
-            1.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 1.0f
-        } {}
+        inline constexpr explicit Matrix3(typename Matrix<T, 3>::IdentityType = Matrix<T, 3>::Identity): Matrix<T, 3>(Matrix<T, 3>::Identity) {}
 
         #ifndef DOXYGEN_GENERATING_OUTPUT
         template<class U> explicit Matrix3(U) = delete;

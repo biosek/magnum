@@ -36,6 +36,24 @@ namespace Implementation {
     template<size_t ...sequence> struct GenerateSequence<0, sequence...> {
         typedef Sequence<sequence...> Type;
     };
+
+    template<size_t totalSequences, size_t remainingSequences,  size_t remainingSubSequences, size_t ...sequence> struct GenerateIdentitySubSequence:
+        GenerateIdentitySubSequence<totalSequences, remainingSequences, remainingSubSequences-1, 0, sequence...> {};
+
+    template<size_t totalSequences, size_t remainingSequences = totalSequences-1, size_t ...sequence> struct GenerateIdentitySequence:
+        GenerateIdentitySubSequence<totalSequences, remainingSequences-1, totalSequences-1, 0, sequence...> {};
+
+    /* E.g. GenerateIdentitySequence<3>::Type is
+            Sequence<1, 0, 0,
+                     0, 1, 0,
+                     0, 0, 1>
+    */
+    template<size_t totalSequences, size_t ...sequence> struct GenerateIdentitySequence<totalSequences, 0, sequence...> {
+        typedef Sequence<sequence..., 1> Type;
+    };
+
+    template<size_t totalSequences, size_t remainingSequences, size_t ...sequence> struct GenerateIdentitySubSequence<totalSequences, remainingSequences, 0, sequence...>:
+        GenerateIdentitySequence<totalSequences, remainingSequences, 1, sequence...> {};
 }
 #endif
 
@@ -83,11 +101,7 @@ template<class T, size_t size> class Matrix {
          * You can also explicitly call this constructor with
          * `Matrix m(Matrix::Identity);`.
          */
-        inline explicit Matrix(IdentityType = Identity): _data() {
-            /** @todo constexpr how? */
-            for(size_t i = 0; i != size; ++i)
-                _data[size*i+i] = static_cast<T>(1);
-        }
+        inline constexpr explicit Matrix(IdentityType = Identity): Matrix(typename Implementation::GenerateIdentitySequence<size>::Type()) {}
 
         #ifndef DOXYGEN_GENERATING_OUTPUT
         template<class U> explicit Matrix(U) = delete;
@@ -234,6 +248,8 @@ template<class T, size_t size> class Matrix {
         template<size_t ...sequence, class ...U> inline constexpr Matrix(Implementation::Sequence<sequence...> s, const Vector<T, size>& first, U... next): Matrix(s, next..., first[sequence]...) {}
 
         template<size_t ...sequence, class ...U> inline constexpr Matrix(Implementation::Sequence<sequence...> s, T first, U... next): Matrix(first, next...) {}
+
+        template<size_t ...sequence> inline constexpr Matrix(Implementation::Sequence<sequence...> s): Matrix(T(sequence)...) {}
 
         T _data[size*size];
 };
