@@ -43,6 +43,11 @@ template<class T> class Matrix4: public Matrix<T, 4> {
             return *reinterpret_cast<const Matrix4<T>*>(data);
         }
 
+        /** @copydoc Matrix::from(const Vector<T, size>&, const U&...) */
+        template<class ...U> inline constexpr static Matrix4<T> from(const Vector<T, 4>& first, const U&... next) {
+            return Matrix<T, 4>::from(first, next...);
+        }
+
         /**
          * @brief Translation matrix
          * @param vec   Translation vector
@@ -106,7 +111,7 @@ template<class T> class Matrix4: public Matrix<T, 4> {
         }
 
         /** @copydoc Matrix::Matrix(bool) */
-        inline constexpr Matrix4(bool identity = true): Matrix<T, 4>{
+        inline constexpr explicit Matrix4(bool identity = true): Matrix<T, 4>{
             /** @todo Make this in Matrix itself, after it will be constexpr */
             identity ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f,
             0.0f, identity ? 1.0f : 0.0f, 0.0f, 0.0f,
@@ -116,7 +121,7 @@ template<class T> class Matrix4: public Matrix<T, 4> {
 
         /** @copydoc Matrix::Matrix(T, U&&...) */
         #ifndef DOXYGEN_GENERATING_OUTPUT
-        template<class ...U> inline constexpr Matrix4(T first, U&&... next): Matrix<T, 4>(first, std::forward<U>(next)...) {}
+        template<class ...U> inline constexpr Matrix4(T first, U... next): Matrix<T, 4>(first, next...) {}
         #else
         template<class ...U> inline constexpr Matrix4(T first, U&&... next) {}
         #endif
@@ -127,11 +132,11 @@ template<class T> class Matrix4: public Matrix<T, 4> {
         /** @copydoc Matrix::operator=() */
         inline constexpr Matrix4<T>& operator=(const Matrix<T, 4>& other) { return Matrix<T, 4>::operator=(other); }
 
-        /** @copydoc Matrix::at(size_t) const */
-        inline constexpr Vector4<T> at(size_t col) const { return Matrix<T, 4>::at(col); }
+        /** @copydoc Matrix::operator[](size_t) */
+        inline Vector4<T>& operator[](size_t col) { return Vector4<T>::from(Matrix<T, 4>::data()+col*4); }
 
-        /** @copydoc Matrix::at(size_t, size_t) const */
-        inline constexpr T at(size_t row, size_t col) const { return Matrix<T, 4>::at(row, col); }
+        /** @copydoc Matrix::operator[](size_t) const */
+        inline constexpr const Vector4<T>& operator[](size_t col) const { return Vector4<T>::from(Matrix<T, 4>::data()+col*4); }
 
         /** @copydoc Matrix::operator*(const Matrix<T, size>&) const */
         inline Matrix4<T> operator*(const Matrix<T, 4>& other) const { return Matrix<T, 4>::operator*(other); }
@@ -153,6 +158,14 @@ template<class T> class Matrix4: public Matrix<T, 4> {
 
         /** @copydoc Matrix::inversed() */
         inline Matrix4<T> inversed() const { return Matrix<T, 4>::inversed(); }
+
+        /** @brief Rotation part of the matrix */
+        inline Matrix3<T> rotation() const {
+            return Matrix3<T>::from(
+                (*this)[0].xyz().normalized(),
+                (*this)[1].xyz().normalized(),
+                (*this)[2].xyz().normalized());
+        }
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT

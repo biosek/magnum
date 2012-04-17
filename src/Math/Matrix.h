@@ -23,6 +23,21 @@
 
 namespace Magnum { namespace Math {
 
+#ifndef DOXYGEN_GENERATING_OUTPUT
+namespace Implementation {
+    template<class T, size_t size> class MatrixDeterminant;
+
+    template<size_t ...> struct Sequence {};
+
+    template<size_t N, size_t ...S> struct GenerateSequence:
+        GenerateSequence<N-1, N-1, S...> {};
+
+    template<size_t ...S> struct GenerateSequence<0, S...> {
+        typedef Sequence<S...> Type;
+    };
+}
+#endif
+
 /**
  * @brief %Matrix
  *
@@ -49,10 +64,19 @@ template<class T, size_t size> class Matrix {
         }
 
         /**
+         * @brief %Matrix from column vectors
+         * @param first First column vector
+         * @param next  Next column vectors
+         */
+        template<class ...U> inline constexpr static Matrix<T, size> from(const Vector<T, size>& first, const U&... next) {
+            return from(typename Implementation::GenerateSequence<size>::Type(), first, next...);
+        }
+
+        /**
          * @brief Default constructor
          * @param identity Create identity matrix instead of zero matrix.
          */
-        inline Matrix(bool identity = true): _data() {
+        inline explicit Matrix(bool identity = true): _data() {
             /** @todo constexpr how? */
             if(identity) for(size_t i = 0; i != size; ++i)
                 _data[size*i+i] = static_cast<T>(1);
@@ -66,9 +90,9 @@ template<class T, size_t size> class Matrix {
          * Note that the values are in column-major order.
          */
         #ifndef DOXYGEN_GENERATING_OUTPUT
-        template<class ...U> inline constexpr Matrix(T first, U&&... next): _data{first, std::forward<U>(next)...} {}
+        template<class ...U> inline constexpr Matrix(T first, U... next): _data{first, next...} {}
         #else
-        template<class ...U> inline constexpr Matrix(T first, U&&... next);
+        template<class ...U> inline constexpr Matrix(T first, U... next);
         #endif
 
         /** @brief Copy constructor */
@@ -82,39 +106,24 @@ template<class T, size_t size> class Matrix {
          * @return One-dimensional array of `size*size` length in column-major
          *      order.
          */
-        inline constexpr const T* data() const { return _data; }
-
-        /** @brief Value at given position */
-        inline constexpr T at(size_t row, size_t col) const {
-            return _data[col*size+row];
-        }
+        inline T* data() { return _data; }
+        inline constexpr const T* data() const { return _data; } /**< @copydoc data() */
 
         /** @brief %Matrix column */
-        inline constexpr Vector<T, size> at(size_t col) const {
-            return *reinterpret_cast<const Vector<T, size>*>(_data+col*size);
+        inline Vector<T, size>& operator[](size_t col) {
+            return Vector<T, size>::from(_data+col*size);
         }
 
-        /** @brief Set value at given position */
-        inline void set(size_t row, size_t col, T value) {
-            _data[col*size+row] = value;
-        }
-
-        /** @brief Set matrix column */
-        inline void set(size_t col, const Vector<T, size>& value) {
-            memcpy(_data+col*size, value.data(), size*sizeof(T));
-        }
-
-        /** @brief Add value to given position */
-        inline void add(size_t row, size_t col, T value) {
-            _data[col*size+row] += value;
+        /** @copydoc operator[]() */
+        inline constexpr const Vector<T, size>& operator[](size_t col) const {
+            return Vector<T, size>::from(_data+col*size);
         }
 
         /** @brief Equality operator */
         inline bool operator==(const Matrix<T, size>& other) const {
-            for(size_t row = 0; row != size; ++row) {
+            for(size_t row = 0; row != size; ++row)
                 for(size_t col = 0; col != size; ++col)
-                    if(!TypeTraits<T>::equals(at(row, col), other.at(row, col))) return false;
-            }
+                    if(!TypeTraits<T>::equals((*this)[col][row], other[col][row])) return false;
 
             return true;
         }
@@ -128,12 +137,10 @@ template<class T, size_t size> class Matrix {
         Matrix<T, size> operator*(const Matrix<T, size>& other) const {
             Matrix<T, size> out(false);
 
-            for(size_t row = 0; row != size; ++row) {
-                for(size_t col = 0; col != size; ++col) {
+            for(size_t row = 0; row != size; ++row)
+                for(size_t col = 0; col != size; ++col)
                     for(size_t pos = 0; pos != size; ++pos)
-                        out.add(row, col, at(row, pos)*other.at(pos, col));
-                }
-            }
+                        out[col][row] += (*this)[pos][row]*other[col][pos];
 
             return out;
         }
@@ -147,10 +154,9 @@ template<class T, size_t size> class Matrix {
         Vector<T, size> operator*(const Vector<T, size>& other) const {
             Vector<T, size> out;
 
-            for(size_t row = 0; row != size; ++row) {
+            for(size_t row = 0; row != size; ++row)
                 for(size_t pos = 0; pos != size; ++pos)
-                    out.add(row, at(row, pos)*other.at(pos));
-            }
+                    out[row] += (*this)[pos][row]*other[pos];
 
             return out;
         }
@@ -159,23 +165,21 @@ template<class T, size_t size> class Matrix {
         Matrix<T, size> transposed() const {
             Matrix<T, size> out(false);
 
-            for(size_t row = 0; row != size; ++row) {
+            for(size_t row = 0; row != size; ++row)
                 for(size_t col = 0; col != size; ++col)
-                    out.set(col, row, at(row, col));
-            }
+                    out[row][col] = (*this)[col][row];
 
             return out;
         }
 
-        /** @brief %Matrix without given row and column */
-        Matrix<T, size-1> ij(size_t skipRow, size_t skipCol) const {
+        /** @brief %Matrix without given column and row */
+        Matrix<T, size-1> ij(size_t skipCol, size_t skipRow) const {
             Matrix<T, size-1> out(false);
 
-            for(size_t row = 0; row != size-1; ++row) {
+            for(size_t row = 0; row != size-1; ++row)
                 for(size_t col = 0; col != size-1; ++col)
-                    out.set(row, col, at(row + (row >= skipRow),
-                                         col + (col >= skipCol)));
-            }
+                    out[col][row] = (*this)[col + (col >= skipCol)]
+                                           [row + (row >= skipRow)];
 
             return out;
         }
@@ -187,14 +191,7 @@ template<class T, size_t size> class Matrix {
          * matrix, where the determinant is computed directly. Complexity is
          * O(n!), the same as when computing the determinant directly.
          */
-        T determinant() const {
-            T out(0);
-
-            for(size_t col = 0; col != size; ++col)
-                out += ((col & 1) ? -1 : 1)*at(0, col)*ij(0, col).determinant();
-
-            return out;
-        }
+        inline T determinant() const { return Implementation::MatrixDeterminant<T, size>()(*this); }
 
         /**
          * @brief Inverse matrix
@@ -204,46 +201,59 @@ template<class T, size_t size> class Matrix {
 
             T _determinant = determinant();
 
-            for(size_t row = 0; row != size; ++row) {
+            for(size_t row = 0; row != size; ++row)
                 for(size_t col = 0; col != size; ++col)
-                    out.set(row, col, (((row+col) & 1) ? -1 : 1)*ij(col, row).determinant()/_determinant);
-            }
+                    out[col][row] = (((row+col) & 1) ? -1 : 1)*ij(row, col).determinant()/_determinant;
 
             return out;
         }
 
     private:
+        template<size_t ...sequence, class ...U> inline constexpr static Matrix<T, size> from(Implementation::Sequence<sequence...> s, const Vector<T, size>& first, U... next) {
+            return from(s, next..., first[sequence]...);
+        }
+
+        template<size_t ...sequence, class ...U> inline constexpr static Matrix<T, size> from(Implementation::Sequence<sequence...> s, T first, U... next) {
+            return Matrix<T, size>(first, next...);
+        }
+
         T _data[size*size];
 };
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
-/* Barebone template specialization for 2x2 matrix (only for determinant computation) */
-template<class T> class Matrix<T, 2> {
+namespace Implementation {
+
+template<class T, size_t size> class MatrixDeterminant {
     public:
-        inline Matrix(bool identity = true): _data() {
-            if(identity) {
-                set(0, 0, T(1));
-                set(1, 1, T(1));
-            }
-        }
-        inline Matrix<T, 2>& operator=(const Matrix<T, 2>& other) {
-            if(&other != this) setData(other.data());
-            return *this;
-        }
-        inline void setData(const T* data) { memcpy(_data, data, 4*sizeof(T)); }
-        inline T at(size_t row, size_t col) const { return _data[col*2+row]; }
-        inline void set(size_t row, size_t col, T value) { _data[col*2+row] = value; }
+        /** @brief Functor */
+        T operator()(const Matrix<T, size>& m) {
+            T out(0);
 
-        T determinant() const {
-            return at(0, 0)*at(1, 1) - at(0, 1)*at(1, 0);
-        }
+            for(size_t col = 0; col != size; ++col)
+                out += ((col & 1) ? -1 : 1)*m[col][0]*m.ij(col, 0).determinant();
 
-    private:
-        T _data[4];
+            return out;
+        }
 };
-#endif
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
+template<class T> class MatrixDeterminant<T, 2> {
+    public:
+        /** @brief Functor */
+        inline constexpr T operator()(const Matrix<T, 2>& m) {
+            return m[0][0]*m[1][1] - m[1][0]*m[0][1];
+        }
+};
+
+template<class T> class MatrixDeterminant<T, 1> {
+    public:
+        /** @brief Functor */
+        inline constexpr T operator()(const Matrix<T, 1>& m) {
+            return m[0][0];
+        }
+};
+
+}
+
 template<class T, size_t size> Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, const Magnum::Math::Matrix<T, size>& value) {
     debug << "Matrix(";
     debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, false);
@@ -251,7 +261,7 @@ template<class T, size_t size> Corrade::Utility::Debug operator<<(Corrade::Utili
         if(row != 0) debug << ",\n       ";
         for(size_t col = 0; col != size; ++col) {
             if(col != 0) debug << ", ";
-            debug << value.at(row, col);
+            debug << value[col][row];
         }
     }
     debug << ')';

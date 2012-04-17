@@ -1,5 +1,3 @@
-#ifndef Magnum_Test_SceneTest_h
-#define Magnum_Test_SceneTest_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -15,20 +13,22 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-#include <QtCore/QObject>
+#include "Plane.h"
 
-#include "Object.h"
+using namespace std;
 
-namespace Magnum { namespace Test {
+namespace Magnum { namespace Primitives {
 
-class SceneTest: public QObject {
-    Q_OBJECT
-
-    private slots:
-        void transformation();
-        void parent();
-};
+Plane::Plane(): MeshData(Mesh::Primitive::TriangleStrip, nullptr, {new vector<Vector4>{
+    {1.0f, -1.0f, 0.0f},
+    {1.0f, 1.0f, 0.0f},
+    {-1.0f, -1.0f, 0.0f},
+    {-1.0f, 1.0f, 0.0f}
+}}, {new vector<Vector3>{
+    {0.0f, 0.0f, 1.0f},
+    {0.0f, 0.0f, 1.0f},
+    {0.0f, 0.0f, 1.0f},
+    {0.0f, 0.0f, 1.0f}
+}}, {}) {}
 
 }}
-
-#endif

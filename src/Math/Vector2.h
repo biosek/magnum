@@ -36,8 +36,8 @@ template<class T> class Vector2: public Vector<T, 2> {
             return *reinterpret_cast<const Vector2<T>*>(data);
         }
 
-        /** @copydoc Vector::Vector */
-        inline constexpr Vector2() {}
+        /** @copydoc Vector::Vector(T) */
+        inline constexpr explicit Vector2(T value = T()): Vector<T, 2>(value, value) {}
 
         /** @copydoc Vector::Vector(const Vector&)  */
         inline constexpr Vector2(const Vector<T, 2>& other): Vector<T, 2>(other) {}
@@ -49,17 +49,14 @@ template<class T> class Vector2: public Vector<T, 2> {
          */
         inline constexpr Vector2(T x, T y): Vector<T, 2>(x, y) {}
 
-        inline constexpr T x() const { return Vector<T, 2>::at(0); } /**< @brief X component */
-        inline constexpr T y() const { return Vector<T, 2>::at(1); } /**< @brief Y component */
+        inline constexpr T x() const { return (*this)[0]; } /**< @brief X component */
+        inline constexpr T y() const { return (*this)[1]; } /**< @brief Y component */
 
-        inline void setX(T value) { this->set(0, value); } /**< @brief Set X component */
-        inline void setY(T value) { this->set(1, value); } /**< @brief Set Y component */
+        inline void setX(T value) { (*this)[0] = value; }   /**< @brief Set X component */
+        inline void setY(T value) { (*this)[1] = value; }   /**< @brief Set Y component */
 
         /** @copydoc Vector::operator=() */
         inline Vector2<T>& operator=(const Vector<T, 2>& other) { return Vector<T, 2>::operator=(other); }
-
-        /** @copydoc Vector::operator*(const Vector<T, size>&) const */
-        inline T operator*(const Vector<T, 2>& other) const { return Vector<T, 2>::operator*(other); }
 
         /** @copydoc Vector::operator*(T) const */
         inline Vector2<T> operator*(T number) const { return Vector<T, 2>::operator*(number); }

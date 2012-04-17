@@ -50,12 +50,22 @@ template<class T, size_t size> class Vector {
 
         /** @copydoc from(T*) */
         inline constexpr static const Vector<T, size>& from(const T* data) {
-            return *reinterpret_cast<Vector<T, size>*>(data);
+            return *reinterpret_cast<const Vector<T, size>*>(data);
+        }
+
+        /** @brief Dot product */
+        static T dot(const Vector<T, size>& a, const Vector<T, size>& b) {
+            T out(0);
+
+            for(size_t i = 0; i != size; ++i)
+                out += a[i]*b[i];
+
+            return out;
         }
 
         /** @brief Angle between vectors */
         inline static T angle(const Vector<T, size>& a, const Vector<T, size>& b) {
-            return acos((a*b)/(a.length()*b.length()));
+            return acos(dot(a, b)/(a.length()*b.length()));
         }
 
         /** @brief Default constructor */
@@ -67,10 +77,19 @@ template<class T, size_t size> class Vector {
          * @param next  Next values
          */
         #ifndef DOXYGEN_GENERATING_OUTPUT
-        template<class ...U> inline constexpr Vector(T first, U&&... next): _data{first, std::forward<U>(next)...} {}
+        template<class ...U> inline constexpr Vector(T first, U... next): _data{first, next...} {}
         #else
-        template<class ...U> inline constexpr Vector(T first, U&&... next);
+        template<class ...U> inline constexpr Vector(T first, U... next);
         #endif
+
+        /**
+         * @brief Constructor
+         * @param value Value for all fields
+         */
+        inline explicit Vector(T value) {
+            for(size_t i = 0; i != size; ++i)
+                _data[i] = value;
+        }
 
         /** @brief Copy constructor */
         inline constexpr Vector(const Vector<T, size>& other) = default;
@@ -82,27 +101,17 @@ template<class T, size_t size> class Vector {
          * @brief Raw data
          * @return Array with the same size as the vector
          */
-        inline constexpr const T* data() const { return _data; }
+        inline T* data() { return _data; }
+        inline constexpr const T* data() const { return _data; } /**< @copydoc data() */
 
         /** @brief Value at given position */
-        inline constexpr T at(size_t pos) const { return _data[pos]; }
-
-        /** @brief Value at given position */
-        inline constexpr T operator[](size_t pos) const { return _data[pos]; }
-
-        /** @brief Reference to value at given position */
         inline T& operator[](size_t pos) { return _data[pos]; }
-
-        /** @brief Set value at given position */
-        inline void set(size_t pos, T value) { _data[pos] = value; }
-
-        /** @brief Add value to given position */
-        inline void add(size_t pos, T value) { _data[pos] += value; }
+        inline constexpr T operator[](size_t pos) const { return _data[pos]; } /**< @copydoc operator[]() */
 
         /** @brief Equality operator */
         inline bool operator==(const Vector<T, size>& other) const {
             for(size_t pos = 0; pos != size; ++pos)
-                if(!TypeTraits<T>::equals(at(pos), other.at(pos))) return false;
+                if(!TypeTraits<T>::equals((*this)[pos], other[pos])) return false;
 
             return true;
         }
@@ -110,16 +119,6 @@ template<class T, size_t size> class Vector {
         /** @brief Non-equality operator */
         inline bool operator!=(const Vector<T, size>& other) const {
             return !operator==(other);
-        }
-
-        /** @brief Dot product */
-        T operator*(const Vector<T, size>& other) const {
-            T out(0);
-
-            for(size_t i = 0; i != size; ++i)
-                out += at(i)*other.at(i);
-
-            return out;
         }
 
         /** @brief Multiply vector */
@@ -135,7 +134,8 @@ template<class T, size_t size> class Vector {
          */
         Vector<T, size>& operator*=(T number) {
             for(size_t i = 0; i != size; ++i)
-                set(i, at(i)*number);
+                (*this)[i] *= number;
+
             return *this;
         }
 
@@ -152,7 +152,8 @@ template<class T, size_t size> class Vector {
          */
         Vector<T, size>& operator/=(T number) {
             for(size_t i = 0; i != size; ++i)
-                set(i, at(i)/number);
+                (*this)[i] /= number;
+
             return *this;
         }
 
@@ -169,7 +170,8 @@ template<class T, size_t size> class Vector {
          */
         Vector<T, size>& operator+=(const Vector<T, size>& other) {
             for(size_t i = 0; i != size; ++i)
-                set(i, at(i)+other.at(i));
+                (*this)[i] += other[i];
+
             return *this;
         }
 
@@ -186,7 +188,8 @@ template<class T, size_t size> class Vector {
          */
         Vector<T, size>& operator-=(const Vector<T, size>& other) {
             for(size_t i = 0; i != size; ++i)
-                set(i, at(i)-other.at(i));
+                (*this)[i] -= other[i];
+
             return *this;
         }
 
@@ -195,14 +198,14 @@ template<class T, size_t size> class Vector {
             Vector<T, size> out;
 
             for(size_t i = 0; i != size; ++i)
-                out.set(i, -at(i));
+                out[i] = -(*this)[i];
 
             return out;
         }
 
         /** @brief %Vector length */
         inline T length() const {
-            return sqrt(operator*(*this));
+            return sqrt(dot(*this, *this));
         }
 
         /** @brief Normalized vector (of length 1) */
@@ -215,7 +218,7 @@ template<class T, size_t size> class Vector {
             T out = 1;
 
             for(size_t i = 0; i != size; ++i)
-                out *= at(i);
+                out *= (*this)[i];
 
             return out;
         }
@@ -230,7 +233,7 @@ template<class T, size_t size> Corrade::Utility::Debug operator<<(Corrade::Utili
     debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, false);
     for(size_t i = 0; i != size; ++i) {
         if(i != 0) debug << ", ";
-        debug << value.at(i);
+        debug << value[i];
     }
     debug << ')';
     debug.setFlag(Corrade::Utility::Debug::SpaceAfterEachValue, true);

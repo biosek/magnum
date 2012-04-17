@@ -37,8 +37,13 @@ template<class T> class Matrix3: public Matrix<T, 3> {
             return *reinterpret_cast<const Matrix3<T>*>(data);
         }
 
+        /** @copydoc Matrix::from(const Vector<T, size>&, const U&...) */
+        template<class ...U> inline constexpr static Matrix3<T> from(const Vector<T, 3>& first, const U&... next) {
+            return Matrix<T, 3>::from(first, next...);
+        }
+
         /** @copydoc Matrix::Matrix(bool) */
-        inline constexpr Matrix3(bool identity = true): Matrix<T, 3>{
+        inline constexpr explicit Matrix3(bool identity = true): Matrix<T, 3>{
             /** @todo Make this in Matrix itself, after it will be constexpr */
             identity ? 1.0f : 0.0f, 0.0f, 0.0f,
             0.0f, identity ? 1.0f : 0.0f, 0.0f,
@@ -47,9 +52,9 @@ template<class T> class Matrix3: public Matrix<T, 3> {
 
         /** @copydoc Matrix::Matrix(T, U&&...) */
         #ifndef DOXYGEN_GENERATING_OUTPUT
-        template<class ...U> inline constexpr Matrix3(T first, U&&... next): Matrix<T, 3>(first, std::forward<U>(next)...) {}
+        template<class ...U> inline constexpr Matrix3(T first, U... next): Matrix<T, 3>(first, next...) {}
         #else
-        template<class ...U> inline constexpr Matrix3(T first, U&&... next) {}
+        template<class ...U> inline constexpr Matrix3(T first, U... next) {}
         #endif
 
         /** @copydoc Matrix::Matrix(const Matrix<T, size>&) */
@@ -58,11 +63,11 @@ template<class T> class Matrix3: public Matrix<T, 3> {
         /** @copydoc Matrix::operator=() */
         inline constexpr Matrix3<T>& operator=(const Matrix<T, 3>& other) { return Matrix<T, 3>::operator=(other); }
 
-        /** @copydoc Matrix::at(size_t) const */
-        inline constexpr Vector3<T> at(size_t col) const { return Matrix<T, 3>::at(col); }
+        /** @copydoc Matrix::operator[](size_t) */
+        inline Vector3<T>& operator[](size_t col) { return Vector3<T>::from(Matrix<T, 3>::data()+col*3); }
 
-        /** @copydoc Matrix::at(size_t, size_t) const */
-        inline constexpr T at(size_t row, size_t col) const { return Matrix<T, 3>::at(row, col); }
+        /** @copydoc Matrix::operator[](size_t) const */
+        inline constexpr const Vector3<T>& operator[](size_t col) const { return Vector3<T>::from(Matrix<T, 3>::data()+col*3); }
 
         /** @copydoc Matrix::operator*(const Matrix<T, size>&) const */
         inline Matrix3<T> operator*(const Matrix<T, 3>& other) const { return Matrix<T, 3>::operator*(other); }

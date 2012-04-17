@@ -1,5 +1,5 @@
-#ifndef Magnum_Test_SceneTest_h
-#define Magnum_Test_SceneTest_h
+#ifndef Magnum_Primitives_Test_CapsuleTest_h
+#define Magnum_Primitives_Test_CapsuleTest_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -17,18 +17,16 @@
 
 #include <QtCore/QObject>
 
-#include "Object.h"
+namespace Magnum { namespace Primitives { namespace Test {
 
-namespace Magnum { namespace Test {
-
-class SceneTest: public QObject {
+class CapsuleTest: public QObject {
     Q_OBJECT
 
     private slots:
-        void transformation();
-        void parent();
+        void withoutTextureCoords();
+        void withTextureCoords();
 };
 
-}}
+}}}
 
 #endif

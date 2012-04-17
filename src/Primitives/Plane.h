@@ -1,5 +1,5 @@
-#ifndef Magnum_Test_SceneTest_h
-#define Magnum_Test_SceneTest_h
+#ifndef Magnum_Primitives_Plane_h
+#define Magnum_Primitives_Plane_h
 /*
     Copyright © 2010, 2011, 2012 Vladimír Vondruš <mosra@centrum.cz>
 
@@ -15,18 +15,23 @@
     GNU Lesser General Public License version 3 for more details.
 */
 
-#include <QtCore/QObject>
+/** @file
+ * @brief Class Magnum::Primitives::Plane
+ */
 
-#include "Object.h"
+#include "Trade/MeshData.h"
 
-namespace Magnum { namespace Test {
+namespace Magnum { namespace Primitives {
 
-class SceneTest: public QObject {
-    Q_OBJECT
+/**
+@brief %Plane primitive
 
-    private slots:
-        void transformation();
-        void parent();
+2x2 plane with normals in positive Z direction.
+*/
+class Plane: public Trade::MeshData {
+    public:
+        /** @brief Constructor */
+        Plane();
 };
 
 }}

@@ -24,7 +24,7 @@
 namespace Magnum {
 
 /**
-@brief Renderbuffer
+@brief %Renderbuffer
 
 Attachable to Framebuffer as render target.
 */
@@ -83,7 +83,7 @@ class Renderbuffer {
         };
 
         /** @copydoc AbstractTexture::InternalFormat */
-        class InternalFormat {
+        class MAGNUM_EXPORT InternalFormat {
             public:
                 /** @copydoc AbstractTexture::InternalFormat::InternalFormat(AbstractTexture::Components, AbstractTexture::ComponentType) */
                 InternalFormat(Components components, ComponentType type);

@@ -43,6 +43,25 @@ class MAGNUM_EXPORT Mesh {
     Mesh& operator=(Mesh&& other) = delete;
 
     public:
+        /** @brief Polygon mode */
+        enum class PolygonMode: GLenum {
+            /**
+             * Interior of the polygon is filled.
+             */
+            Fill = GL_FILL,
+
+            /**
+             * Boundary edges are filled. See also setLineWidth().
+             */
+            Line = GL_LINE,
+
+            /**
+             * Starts of boundary edges are drawn as points. See also
+             * setPointSize().
+             */
+            Point = GL_POINT
+        };
+
         /** @brief Primitive type */
         enum class Primitive: GLenum {
             /**
@@ -85,6 +104,29 @@ class MAGNUM_EXPORT Mesh {
         };
 
         /**
+         * @brief Set polygon drawing mode
+         *
+         * Initial value is PolygonMode::Fill.
+         */
+        inline static void setPolygonMode(PolygonMode mode) {
+            glPolygonMode(GL_FRONT_AND_BACK, Corrade::Utility::castToUnderlyingType(mode));
+        }
+
+        /**
+         * @brief Set line width
+         *
+         * Initial value is 1.
+         */
+        inline static void setLineWidth(GLfloat width) {
+            glLineWidth(width);
+        }
+
+        /** @brief Set point size */
+        inline static void setPointSize(GLfloat size) {
+            glPointSize(size);
+        }
+
+        /**
          * @brief Implicit constructor
          * @param primitive     Primitive type
          *
@@ -92,14 +134,18 @@ class MAGNUM_EXPORT Mesh {
          * data. Note that you have to call setVertexCount() manually for mesh
          * to draw properly.
          */
-        inline Mesh(Primitive primitive = Primitive::Triangles): _primitive(primitive), _vertexCount(0), finalized(false) {}
+        inline Mesh(Primitive primitive = Primitive::Triangles): _primitive(primitive), _vertexCount(0), finalized(false) {
+            glGenVertexArrays(1, &vao);
+        }
 
         /**
          * @brief Constructor
          * @param primitive     Primitive type
          * @param vertexCount   Vertex count
          */
-        inline Mesh(Primitive primitive, GLsizei vertexCount): _primitive(primitive), _vertexCount(vertexCount), finalized(false) {}
+        inline Mesh(Primitive primitive, GLsizei vertexCount): _primitive(primitive), _vertexCount(vertexCount), finalized(false) {
+            glGenVertexArrays(1, &vao);
+        }
 
         /**
          * @brief Destructor
@@ -184,6 +230,21 @@ class MAGNUM_EXPORT Mesh {
         virtual void draw();
 
     protected:
+        /** @brief Unbind any vertex array object */
+        inline static void unbind() { glBindVertexArray(0); }
+
+        /** @brief Bind vertex array object of current mesh */
+        inline void bind() { glBindVertexArray(vao); }
+
+        /**
+         * @brief Finalize the mesh
+         *
+         * Computes location and stride of each attribute in its buffer. After
+         * this function is called, no new attribute can be bound.
+         */
+        void finalize();
+
+    private:
         /** @brief Vertex attribute */
         struct Attribute {
             GLuint attribute;           /**< @brief %Attribute ID */
@@ -193,43 +254,25 @@ class MAGNUM_EXPORT Mesh {
             const GLvoid* pointer;      /**< @brief Pointer to first attribute of this type in the buffer */
         };
 
+        GLuint vao;
+        Primitive _primitive;
+        GLsizei _vertexCount;
+        bool finalized;
+
         /**
          * @brief Buffers with their attributes
-         * @return Map of associated buffers, evey buffer has:
+         *
+         * Map of associated buffers, evey buffer has:
          * - boolean value which signalizes whether the buffer is interleaved
          * - list of bound attributes
          */
-        inline const std::map<Buffer*, std::pair<bool, std::vector<Attribute> > >& buffers() { return _buffers; }
+        std::map<Buffer*, std::pair<bool, std::vector<Attribute> > > _buffers;
 
         /**
          * @brief List of all bound attributes
          *
          * List of all bound attributes bound with bindAttribute().
          */
-        inline const std::set<GLuint>& attributes() { return _attributes; }
-
-        /**
-         * @brief Finalize the mesh
-         *
-         * Computes location and stride of each attribute in its buffer. After
-         * this function is called, no new attribute can be bound.
-         */
-        virtual void finalize();
-
-        /**
-         * @brief Set the mesh dirty
-         *
-         * Sets the attribute locations in buffers as dirty, so they are
-         * recalculated on next drawing.
-         */
-        inline void setDirty() { finalized = false; }
-
-    private:
-        Primitive _primitive;
-        GLsizei _vertexCount;
-        bool finalized;
-
-        std::map<Buffer*, std::pair<bool, std::vector<Attribute> > > _buffers;
         std::set<GLuint> _attributes;
 
         void bindAttribute(Buffer* buffer, GLuint attribute, GLint size, Type type);

@@ -37,13 +37,13 @@ template<class T> class Vector3: public Vector<T, 3> {
         }
 
         /** @brief Vector in direction of X axis */
-        inline constexpr static Vector3<T> xAxis(T length = 1) { return Vector3<T>(length, 0, 0); }
+        inline constexpr static Vector3<T> xAxis(T length = T(1)) { return Vector3<T>(length, T(), T()); }
 
         /** @brief Vector in direction of Y axis */
-        inline constexpr static Vector3<T> yAxis(T length = 1) { return Vector3<T>(0, length, 0); }
+        inline constexpr static Vector3<T> yAxis(T length = T(1)) { return Vector3<T>(T(), length, T()); }
 
         /** @brief Vector in direction of Z axis */
-        inline constexpr static Vector3<T> zAxis(T length = 1) { return Vector3<T>(0, 0, length); }
+        inline constexpr static Vector3<T> zAxis(T length = T(1)) { return Vector3<T>(T(), T(), length); }
 
         /** @brief Cross product */
         constexpr static Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b) {
@@ -52,8 +52,8 @@ template<class T> class Vector3: public Vector<T, 3> {
                               a[0]*b[1]-a[1]*b[0]);
         }
 
-        /** @copydoc Vector::Vector */
-        inline constexpr Vector3() {}
+        /** @copydoc Vector::Vector(T) */
+        inline constexpr explicit Vector3(T value = T()): Vector<T, 3>(value, value, value) {}
 
         /** @copydoc Vector::Vector(const Vector&)  */
         inline constexpr Vector3(const Vector<T, 3>& other): Vector<T, 3>(other) {}
@@ -73,27 +73,24 @@ template<class T> class Vector3: public Vector<T, 3> {
          */
         inline constexpr Vector3(const Vector<T, 2>& other, T z = T(0)): Vector<T, 3>(other[0], other[1], z) {}
 
-        inline constexpr T x() const { return Vector<T, 3>::at(0); } /**< @brief X component */
-        inline constexpr T y() const { return Vector<T, 3>::at(1); } /**< @brief Y component */
-        inline constexpr T z() const { return Vector<T, 3>::at(2); } /**< @brief Z component */
+        inline constexpr T x() const { return (*this)[0]; } /**< @brief X component */
+        inline constexpr T y() const { return (*this)[1]; } /**< @brief Y component */
+        inline constexpr T z() const { return (*this)[2]; } /**< @brief Z component */
 
-        inline void setX(T value) { this->set(0, value); } /**< @brief Set X component */
-        inline void setY(T value) { this->set(1, value); } /**< @brief Set Y component */
-        inline void setZ(T value) { this->set(2, value); } /**< @brief Set Z component */
+        inline void setX(T value) { (*this)[0] = value; }   /**< @brief Set X component */
+        inline void setY(T value) { (*this)[1] = value; }   /**< @brief Set Y component */
+        inline void setZ(T value) { (*this)[2] = value; }   /**< @brief Set Z component */
 
-        inline constexpr T r() const { return x(); } /**< @brief R component */
-        inline constexpr T g() const { return x(); } /**< @brief G component */
-        inline constexpr T b() const { return z(); } /**< @brief B component */
+        inline constexpr T r() const { return x(); }        /**< @brief R component */
+        inline constexpr T g() const { return x(); }        /**< @brief G component */
+        inline constexpr T b() const { return z(); }        /**< @brief B component */
 
-        inline void setR(T value) { setX(value); } /**< @brief Set R component */
-        inline void setG(T value) { setY(value); } /**< @brief Set G component */
-        inline void setB(T value) { setZ(value); } /**< @brief Set B component */
+        inline void setR(T value) { setX(value); }          /**< @brief Set R component */
+        inline void setG(T value) { setY(value); }          /**< @brief Set G component */
+        inline void setB(T value) { setZ(value); }          /**< @brief Set B component */
 
         /** @copydoc Vector::operator=() */
         inline Vector3<T>& operator=(const Vector<T, 3>& other) { return Vector<T, 3>::operator=(other); }
-
-        /** @copydoc Vector::operator*(const Vector<T, size>&) const */
-        inline T operator*(const Vector<T, 3>& other) const { return Vector<T, 3>::operator*(other); }
 
         /** @copydoc Vector::operator*(T) const */
         inline Vector3<T> operator*(T number) const { return Vector<T, 3>::operator*(number); }

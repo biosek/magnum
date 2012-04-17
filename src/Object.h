@@ -65,16 +65,16 @@ class MAGNUM_EXPORT Object {
          * @brief %Scene
          * @return If the object is not assigned to any scene, returns nullptr.
          */
-        Scene* scene() const;
+        Scene* scene();
 
         /** @brief Parent object */
-        inline Object* parent() const { return _parent; }
+        inline Object* parent() { return _parent; }
 
         /** @brief Child objects */
-        inline const std::set<Object*>& children() const { return _children; }
+        inline const std::set<Object*>& children() { return _children; }
 
         /** @brief Set parent object */
-        void setParent(Object* parent);
+        Object* setParent(Object* parent);
 
         /**
          * @brief Transformation matrix
@@ -96,10 +96,7 @@ class MAGNUM_EXPORT Object {
         virtual Matrix4 absoluteTransformation(Camera* camera = nullptr);
 
         /** @brief Set transformation matrix */
-        inline void setTransformation(const Matrix4& transformation) {
-            _transformation = transformation;
-            setDirty();
-        }
+        Object* setTransformation(const Matrix4& transformation);
 
         /**
          * @brief Multiply transformation matrix
@@ -110,19 +107,9 @@ class MAGNUM_EXPORT Object {
          *
          * Multiplies current transformation matrix by new matrix.
          */
-        inline void multiplyTransformation(const Matrix4& transformation, bool global = true) {
+        inline Object* multiplyTransformation(const Matrix4& transformation, bool global = true) {
             setTransformation(global ? transformation*_transformation : _transformation*transformation);
-        }
-
-        /**
-         * @brief Set transformation and parent from another object
-         *
-         * Sets parent and transformation from another object, so they will
-         * appear in the same place.
-         */
-        inline void setTransformationFrom(Object* another) {
-            setParent(another->parent());
-            setTransformation(another->transformation());
+            return this;
         }
 
         /**
@@ -130,8 +117,9 @@ class MAGNUM_EXPORT Object {
          *
          * Same as calling multiplyTransformation() with Matrix4::translation().
          */
-        inline void translate(Vector3 vec, bool global = true) {
+        inline Object* translate(Vector3 vec, bool global = true) {
             multiplyTransformation(Matrix4::translation(vec), global);
+            return this;
         }
 
         /**
@@ -139,18 +127,9 @@ class MAGNUM_EXPORT Object {
          *
          * Same as calling multiplyTransformation() with Matrix4::scaling().
          */
-        inline void scale(Vector3 vec, bool global = true) {
+        inline Object* scale(Vector3 vec, bool global = true) {
             multiplyTransformation(Matrix4::scaling(vec), global);
-        }
-
-        /**
-         * @copydoc scale(Vector3, bool)
-         *
-         * Scales the object proportionally in all dimensions.
-         * @todo Make this functionality in Math::Vector3?
-         */
-        inline void scale(GLfloat xyz, bool global = true) {
-            scale({xyz, xyz, xyz}, global);
+            return this;
         }
 
         /**
@@ -158,8 +137,9 @@ class MAGNUM_EXPORT Object {
          *
          * Same as calling multiplyTransformation() with Matrix4::rotation().
          */
-        inline void rotate(GLfloat angle, Vector3 vec, bool global = true) {
+        inline Object* rotate(GLfloat angle, Vector3 vec, bool global = true) {
             multiplyTransformation(Matrix4::rotation(angle, vec), global);
+            return this;
         }
 
         /** @{ @name Caching helpers
