@@ -32,11 +32,9 @@
 
 #include "Math/Vector2.h"
 #include "Magnum.h"
-
 #include "magnumTextureToolsVisibility.h"
 
 namespace Magnum { namespace TextureTools {
-
 /**
 @brief Pack textures into texture atlas
 @param atlasSize    Size of resulting atlas
@@ -52,6 +50,39 @@ padding.
 */
 std::vector<Rectanglei> MAGNUM_TEXTURETOOLS_EXPORT atlas(const Vector2i& atlasSize, const std::vector<Vector2i>& sizes, const Vector2i& padding = Vector2i());
 
+class Atlas
+{
+public:
+    Atlas();
+
+    Atlas(Vector2i size);
+
+    void init(Vector2i size);
+
+    void insert(std::vector<Vector2i> &rects, std::vector<Rectanglei> &dst);
+
+    Rectanglei insert(Vector2i size);
+
+private:
+    Vector2i _size;
+
+    std::vector<Rectanglei> _usedRectangles;
+    std::vector<Rectanglei> _freeRectangles;
+
+    Rectanglei scoreRect(Vector2i size, int &score1, int &score2) const;
+
+    void placeRect(const Rectanglei &node);
+
+    Rectanglei findPositionForNewNodeBestShortSideFit(Vector2i size, int &bestShortSideFit, int &bestLongSideFit) const;
+
+    bool splitFreeNode(Rectanglei freeNode, const Rectanglei &usedNode);
+
+    void pruneFreeList();
+
+    int intervalIntersection(int x1, int y1, int &x2, int &y2) const;
+
+    bool isRectContainedIn(const Rectanglei &a, const Rectanglei &b);
+};
 }}
 
 #endif
