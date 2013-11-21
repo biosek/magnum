@@ -25,73 +25,47 @@
 #include "Atlas.h"
 
 #include "Math/Functions.h"
+#include <Math/Swizzle.h>
 #include "Math/Geometry/Rectangle.h"
 
 namespace Magnum { namespace TextureTools {
 
-Atlas::Atlas()
-{
-}
-
-Atlas::Atlas(Vector2i size)
-{
-    init(size);
-}
-
-void Atlas::init(Vector2i size)
-{
+Atlas::Atlas(Vector2i size) {
     _size=size;
     _usedRectangles.clear();
     _freeRectangles.clear();
     _freeRectangles.push_back(Rectanglei::fromSize({0,0}, size));
 }
 
-Rectanglei Atlas::insert(Vector2i size)
-{
-    Rectanglei newNode;
-    int score1, score2;
-    newNode = findPositionForNewNodeBestShortSideFit(size, score1, score2);
+Rectanglei Atlas::insert(Vector2i size) {
+    Rectanglei newNode = findPositionForNewNodeBestShortSideFit(size);
 
     if(newNode.height() == 0)
         return newNode;
 
-    size_t numRectanglesToProcess = _freeRectangles.size();
-    for(size_t i = 0; i < numRectanglesToProcess; ++i)
-    {
-        if(splitFreeNode(_freeRectangles[i], newNode))
-        {
-            _freeRectangles.erase((_freeRectangles.begin() + i));
-            --i;
-            --numRectanglesToProcess;
-        }
-    }
+    placeRect(newNode);
 
-    pruneFreeList();
-
-    _usedRectangles.push_back(newNode);
     return newNode;
 }
 
-void Atlas::insert(std::vector<Vector2i> &rects, std::vector<Rectanglei> &dst)
-{
-    dst.clear();
-
-    while(rects.size() > 0)
-    {
+void Atlas::insert(std::vector<Vector2i> &sizes) {
+    while(sizes.size() > 0) {
         int bestScore1 = std::numeric_limits<int>::max();
         int bestScore2 = std::numeric_limits<int>::max();
         int bestRectIndex = -1;
         Rectanglei bestNode;
 
-        size_t rectsSize = rects.size();
-        for(size_t i = 0; i < rectsSize; ++i)
-        {
-            int score1;
-            int score2;
-            Rectanglei newNode = scoreRect(rects[i], score1, score2);
+        for(size_t i = 0; i < sizes.size(); ++i) {
+            int score1 = std::numeric_limits<int>::max();
+            int score2 = std::numeric_limits<int>::max();
+            Rectanglei newNode = findPositionForNewNodeBestShortSideFit(sizes[i], score1, score2);
 
-            if(score1 < bestScore1 || (score1 == bestScore1 && score2 < bestScore2))
-            {
+            if(newNode.height() == 0) {
+                score1 = std::numeric_limits<int>::max();
+                score2 = std::numeric_limits<int>::max();
+            }
+
+            if(score1 < bestScore1 || (score1 == bestScore1 && score2 < bestScore2)) {
                 bestScore1 = score1;
                 bestScore2 = score2;
                 bestNode = newNode;
@@ -103,78 +77,54 @@ void Atlas::insert(std::vector<Vector2i> &rects, std::vector<Rectanglei> &dst)
             return;
 
         placeRect(bestNode);
-        rects.erase(rects.begin() + bestRectIndex);
+        sizes.erase(sizes.begin() + bestRectIndex);
     }
 }
 
-Rectanglei Atlas::scoreRect(Vector2i size, int &score1, int &score2) const
-{
-    Rectanglei newNode;
-    score1 = std::numeric_limits<int>::max();
-    score2 = std::numeric_limits<int>::max();
-
-    newNode = findPositionForNewNodeBestShortSideFit(size, score1, score2);
-
-    if(newNode.height() == 0)
-    {
-        score1 = std::numeric_limits<int>::max();
-        score2 = std::numeric_limits<int>::max();
-    }
-
-    return newNode;
-}
-
-void Atlas::placeRect(const Rectanglei &node)
-{
+void Atlas::placeRect(const Rectanglei &node) {
     size_t numRectanglesToProcess = _freeRectangles.size();
     for(size_t i = 0; i < numRectanglesToProcess; ++i)
-    {
-        if(splitFreeNode(_freeRectangles[i], node))
-        {
+        if(splitFreeNode(_freeRectangles[i], node)) {
             _freeRectangles.erase(_freeRectangles.begin() + i);
             --i;
             --numRectanglesToProcess;
         }
-    }
 
     pruneFreeList();
 
     _usedRectangles.push_back(node);
 }
 
-Rectanglei Atlas::findPositionForNewNodeBestShortSideFit(Vector2i size, int &bestShortSideFit, int &bestLongSideFit) const
-{
+Rectanglei Atlas::findPositionForNewNodeBestShortSideFit(Vector2i size) const {
+    int score1, score2;
+    return findPositionForNewNodeBestShortSideFit(size, score1, score2);
+}
+
+Rectanglei Atlas::findPositionForNewNodeBestShortSideFit(Vector2i size, Int &bestShortSideFit, Int &bestLongSideFit) const {
     Rectanglei bestNode;
-    bestShortSideFit = std::numeric_limits<int>::max();
+    bestShortSideFit = std::numeric_limits<Int>::max();
 
-    size_t freeRecSize = _freeRectangles.size();
-    for(size_t i = 0; i < freeRecSize; ++i)
-    {
-        if(_freeRectangles[i].width() >= size.x() && _freeRectangles[i].height() >= size.y())
-        {
-            int leftoverHoriz = Math::abs(_freeRectangles[i].width() - size.x());
-            int leftoverVert = Math::abs(_freeRectangles[i].height() - size.y());
-            int shortSideFit = Math::min(leftoverHoriz, leftoverVert);
-            int longSideFit = Math::max(leftoverHoriz, leftoverVert);
+    Vector2i flippedSize = Math::swizzle<'y', 'x'>(size);
+    for(size_t i = 0; i < _freeRectangles.size(); ++i) {
+        if((_freeRectangles[i].size() >= size).all()) {
+            Vector2i leftover = Math::abs(_freeRectangles[i].size() - size);
+            Int shortSideFit = leftover.min();
+            Int longSideFit = leftover.max();
 
-            if (shortSideFit < bestShortSideFit || (shortSideFit == bestShortSideFit && longSideFit < bestLongSideFit))
-            {
+            if (shortSideFit < bestShortSideFit || (shortSideFit == bestShortSideFit && longSideFit < bestLongSideFit)) {
                 bestNode = Rectanglei::fromSize(_freeRectangles[i].bottomLeft(), size);
                 bestShortSideFit = shortSideFit;
                 bestLongSideFit = longSideFit;
             }
         }
 
-        if(_freeRectangles[i].width() >= size.y() && _freeRectangles[i].height() >= size.x())
-        {
-            int flippedLeftoverHoriz = Math::abs(_freeRectangles[i].width() - size.y());
-            int flippedLeftoverVert = Math::abs(_freeRectangles[i].height() - size.x());
-            int flippedShortSideFit = Math::min(flippedLeftoverHoriz, flippedLeftoverVert);
-            int flippedLongSideFit = Math::max(flippedLeftoverHoriz, flippedLeftoverVert);
+        if((_freeRectangles[i].size() >= flippedSize).all()) {
+            Vector2i flippedLeftover = Math::abs(_freeRectangles[i].size() - flippedSize);
+            Int flippedShortSideFit = flippedLeftover.min();
+            Int flippedLongSideFit = flippedLeftover.max();
 
-            if (flippedShortSideFit < bestShortSideFit || (flippedShortSideFit == bestShortSideFit && flippedLongSideFit < bestLongSideFit))
-            {
-                bestNode = Rectanglei::fromSize(_freeRectangles[i].bottomLeft(), Vector2i(size.y(),size.x()));
+            if (flippedShortSideFit < bestShortSideFit || (flippedShortSideFit == bestShortSideFit && flippedLongSideFit < bestLongSideFit)) {
+                bestNode = Rectanglei::fromSize(_freeRectangles[i].bottomLeft(), flippedSize);
                 bestShortSideFit = flippedShortSideFit;
                 bestLongSideFit = flippedLongSideFit;
             }
@@ -184,69 +134,60 @@ Rectanglei Atlas::findPositionForNewNodeBestShortSideFit(Vector2i size, int &bes
     return bestNode;
 }
 
-bool Atlas::splitFreeNode(Rectanglei freeNode, const Rectanglei &usedNode)
-{
+bool Atlas::splitFreeNode(Rectanglei freeNode, const Rectanglei &usedNode) {
     // Test with SAT if the rectangles even intersect.
+    /** @todo When Rectangle is complete then change this if to usedNode.intersects(freeNode) */
     if (usedNode.left() >= freeNode.right() || usedNode.right() <= freeNode.left() ||
             usedNode.bottom() >= freeNode.top() || usedNode.top() <= freeNode.bottom())
         return false;
 
-    if (usedNode.left() < freeNode.right() && usedNode.right() > freeNode.left())
-    {
+    if (usedNode.left() < freeNode.right() && usedNode.right() > freeNode.left()) {
         // New node at the top side of the used node.
         if (usedNode.bottom() > freeNode.bottom() && usedNode.bottom() < freeNode.top())
-            _freeRectangles.push_back(Rectanglei::fromSize(freeNode.bottomLeft(), Vector2i(freeNode.width(), usedNode.bottom() - freeNode.bottom())));
+            _freeRectangles.push_back(Rectanglei::fromSize(freeNode.bottomLeft(), {freeNode.width(), usedNode.bottom() - freeNode.bottom()}));
 
         // New node at the bottom side of the used node.
         if (usedNode.bottom() + usedNode.height() < freeNode.bottom() + freeNode.height())
-            _freeRectangles.push_back(Rectanglei::fromSize(Vector2i(freeNode.left(), usedNode.top()), Vector2i(freeNode.width(), freeNode.top() - usedNode.top())));
+            _freeRectangles.push_back(Rectanglei::fromSize({freeNode.left(), usedNode.top()}, {freeNode.width(), freeNode.top() - usedNode.top()}));
     }
 
-    if (usedNode.bottom() < freeNode.top() && usedNode.top() > freeNode.bottom())
-    {
+    if (usedNode.bottom() < freeNode.top() && usedNode.top() > freeNode.bottom()) {
         // New node at the left side of the used node.
         if (usedNode.left() > freeNode.left() && usedNode.left() < freeNode.right())
-            _freeRectangles.push_back(Rectanglei::fromSize(freeNode.bottomLeft(), Vector2i(usedNode.left() - freeNode.left(), freeNode.height())));
+            _freeRectangles.push_back(Rectanglei::fromSize(freeNode.bottomLeft(), {usedNode.left() - freeNode.left(), freeNode.height()}));
 
         // New node at the right side of the used node.
         if (usedNode.left() + usedNode.width() < freeNode.left() + freeNode.width())
-            _freeRectangles.push_back(Rectanglei::fromSize(Vector2i(usedNode.right(), freeNode.bottom()), Vector2i(freeNode.right() - usedNode.right(), freeNode.height())));
+            _freeRectangles.push_back(Rectanglei::fromSize({usedNode.right(), freeNode.bottom()}, {freeNode.right() - usedNode.right(), freeNode.height()}));
     }
 
     return true;
 }
 
-void Atlas::pruneFreeList()
-{
+void Atlas::pruneFreeList() {
     /// Go through each pair and remove any rectangle that is redundant.
-    size_t freeRecSize = _freeRectangles.size();
-    for(size_t i = 0; i < freeRecSize; ++i)
-        for(size_t j = i+1; j < freeRecSize; ++j)
-        {
-            if (isRectContainedIn(_freeRectangles[i], _freeRectangles[j]))
-            {
+    for(size_t i = 0; i < _freeRectangles.size(); ++i)
+        for(size_t j = i+1; j < _freeRectangles.size(); ++j) {
+            if (isRectContainedIn(_freeRectangles[i], _freeRectangles[j])) {
                 _freeRectangles.erase(_freeRectangles.begin()+i);
                 --i;
                 break;
             }
-            if (isRectContainedIn(_freeRectangles[j], _freeRectangles[i]))
-            {
+            if (isRectContainedIn(_freeRectangles[j], _freeRectangles[i])) {
                 _freeRectangles.erase(_freeRectangles.begin()+j);
                 --j;
             }
         }
 }
 
-int Atlas::intervalIntersection(int x1, int y1, int &x2, int &y2) const
-{
+int Atlas::intervalIntersection(Int x1, Int y1, Int &x2, Int &y2) const {
     if (y1 < x1 || y2 < x1)
         return 0;
 
     return Math::min(y1, y2) - Math::max(x1, x2);
 }
 
-bool Atlas::isRectContainedIn(const Rectanglei &a, const Rectanglei &b)
-{
+bool Atlas::isRectContainedIn(const Rectanglei &a, const Rectanglei &b) {
     return a.left() >= b.left() && a.bottom() >= b.bottom() && a.right() <= b.right() && a.top() <= b.top();
 }
 

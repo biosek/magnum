@@ -25,7 +25,7 @@
 */
 
 /** @file
- * @brief Function Magnum::TextureTools::atlas()
+ * @brief Class Magnum::TextureTools::Atlas and Function Magnum::TextureTools::atlas()
  */
 
 #include <vector>
@@ -50,38 +50,34 @@ padding.
 */
 std::vector<Rectanglei> MAGNUM_TEXTURETOOLS_EXPORT atlas(const Vector2i& atlasSize, const std::vector<Vector2i>& sizes, const Vector2i& padding = Vector2i());
 
-class Atlas
-{
-public:
-    Atlas();
+class Atlas {
+    public:
+        Atlas(Vector2i size);
 
-    Atlas(Vector2i size);
+        void insert(std::vector<Vector2i> &sizes);
 
-    void init(Vector2i size);
+        Rectanglei insert(Vector2i size);
 
-    void insert(std::vector<Vector2i> &rects, std::vector<Rectanglei> &dst);
+        const std::vector<Rectanglei>& rectangles() const { return _usedRectangles; }
 
-    Rectanglei insert(Vector2i size);
+    private:
+        Vector2i _size;
 
-private:
-    Vector2i _size;
+        std::vector<Rectanglei> _usedRectangles;
+        std::vector<Rectanglei> _freeRectangles;
 
-    std::vector<Rectanglei> _usedRectangles;
-    std::vector<Rectanglei> _freeRectangles;
+        void placeRect(const Rectanglei &node);
 
-    Rectanglei scoreRect(Vector2i size, int &score1, int &score2) const;
+        Rectanglei findPositionForNewNodeBestShortSideFit(Vector2i size) const;
+        Rectanglei findPositionForNewNodeBestShortSideFit(Vector2i size, Int& bestShortSideFit, Int& bestLongSideFit) const;
 
-    void placeRect(const Rectanglei &node);
+        bool splitFreeNode(Rectanglei freeNode, const Rectanglei& usedNode);
 
-    Rectanglei findPositionForNewNodeBestShortSideFit(Vector2i size, int &bestShortSideFit, int &bestLongSideFit) const;
+        void pruneFreeList();
 
-    bool splitFreeNode(Rectanglei freeNode, const Rectanglei &usedNode);
+        int intervalIntersection(Int x1, Int y1, Int &x2, Int &y2) const;
 
-    void pruneFreeList();
-
-    int intervalIntersection(int x1, int y1, int &x2, int &y2) const;
-
-    bool isRectContainedIn(const Rectanglei &a, const Rectanglei &b);
+        bool isRectContainedIn(const Rectanglei& a, const Rectanglei& b);
 };
 }}
 
