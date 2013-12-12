@@ -158,7 +158,11 @@ class NaClApplication: public pp::Instance, public pp::Graphics3DClient, public 
         #endif
 
         /** @copydoc GlutApplication::GlutApplication(const Arguments&, std::nullptr_t) */
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         explicit NaClApplication(const Arguments& arguments, std::nullptr_t);
+        #else
+        explicit NaClApplication(const Arguments& arguments, void*);
+        #endif
 
         /** @brief Whether the application runs fullscreen */
         bool isFullscreen();
@@ -458,13 +462,21 @@ class NaClApplication::InputEvent {
     protected:
         constexpr InputEvent(Modifiers modifiers): _accepted(false), _modifiers(modifiers) {}
 
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         ~InputEvent() = default;
+        #else
+        ~InputEvent();
+        #endif
     #endif
 
     private:
         bool _accepted;
         const Modifiers _modifiers;
 };
+
+#ifdef CORRADE_GCC45_COMPATIBILITY
+inline NaClApplication::InputEvent::~InputEvent() = default;
+#endif
 
 /**
 @brief Key event

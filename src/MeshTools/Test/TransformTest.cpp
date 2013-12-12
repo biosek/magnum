@@ -43,15 +43,15 @@ class TransformTest: public TestSuite::Tester {
 };
 
 TransformTest::TransformTest() {
-    addTests({&TransformTest::transformVectors2D,
+    addTests<TransformTest>({&TransformTest::transformVectors2D,
               &TransformTest::transformVectors3D,
 
               &TransformTest::transformPoints2D,
               &TransformTest::transformPoints3D});
 }
 
-/* GCC < 4.7 doesn't like constexpr here, don't know why */
-#ifdef CORRADE_GCC46_COMPATIBILITY
+/** @bug GCC < 4.7 doesn't like constexpr here, don't know why */
+#if defined(CORRADE_GCC46_COMPATIBILITY) && !defined(CORRADE_GCC45_COMPATIBILITY)
 #define constexpr const
 #endif
 
@@ -85,7 +85,7 @@ constexpr static std::array<Vector3, 2> points3DRotatedTranslated{{
     {15.0f,  1.5f,  1.5f}
 }};
 
-#ifdef CORRADE_GCC46_COMPATIBILITY
+#if defined(CORRADE_GCC46_COMPATIBILITY) && !defined(CORRADE_GCC45_COMPATIBILITY)
 #undef constexpr
 #endif
 

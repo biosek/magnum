@@ -30,11 +30,19 @@ ObjectData3D::ObjectData3D(std::vector<UnsignedInt> children, const Matrix4& tra
 
 ObjectData3D::ObjectData3D(std::vector<UnsignedInt> children, const Matrix4& transformation): _children(std::move(children)), _transformation(transformation), _instanceType(ObjectInstanceType3D::Empty), _instance(-1) {}
 
-ObjectData3D::ObjectData3D(ObjectData3D&&) = default;
+/* GCC 4.4 doesn't like it defaulted */
+ObjectData3D::ObjectData3D(ObjectData3D&& other): _children(std::move(other._children)), _transformation(std::move(other._transformation)), _instanceType(std::move(other._instanceType)), _instance(std::move(other._instance)) {}
 
 ObjectData3D::~ObjectData3D() = default;
 
-ObjectData3D& ObjectData3D::operator=(ObjectData3D&&) = default;
+/* GCC 4.5 doesn't like it defaulted */
+ObjectData3D& ObjectData3D::operator=(ObjectData3D&& other) {
+    std::swap(_children, other._children);
+    std::swap(_transformation, other._transformation);
+    std::swap(_instanceType, other._instanceType);
+    std::swap(_instance, other._instance);
+    return *this;
+}
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 Debug operator<<(Debug debug, ObjectInstanceType3D value) {

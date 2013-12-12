@@ -65,7 +65,7 @@ typedef BasicColor3<UnsignedByte> Color3ub;
 typedef BasicColor4<UnsignedByte> Color4ub;
 
 ColorTest::ColorTest() {
-    addTests({&ColorTest::construct,
+    addTests<ColorTest>({&ColorTest::construct,
               &ColorTest::constructDefault,
               &ColorTest::constructOneValue,
               &ColorTest::constructParts,
@@ -117,7 +117,10 @@ void ColorTest::constructDefault() {
 }
 
 void ColorTest::constructOneValue() {
-    constexpr Color3 a(0.25f);
+    #ifndef CORRADE_GCC46_COMPATIBILITY
+    constexpr /* Not constexpr under GCC < 4.7 */
+    #endif
+    Color3 a(0.25f);
     CORRADE_COMPARE(a, Color3(0.25f, 0.25f, 0.25f));
 
     constexpr Color4 b(0.25f, 0.5f);
@@ -149,20 +152,26 @@ void ColorTest::constructParts() {
 }
 
 void ColorTest::constructConversion() {
-    typedef BasicColor3<Double> Color3d;
-    typedef BasicColor4<Double> Color4d;
+    typedef BasicColor3<UnsignedByte> Color3ub;
+    typedef BasicColor4<UnsignedByte> Color4ub;
 
-    constexpr Color3 a(1.0f, 0.5f, 0.75f);
-    constexpr Color3d b(a);
-    CORRADE_COMPARE(b, Color3d(1.0, 0.5, 0.75));
+    constexpr Color3 a(10.1f, 12.5f, 0.75f);
+    #ifndef CORRADE_GCC46_COMPATIBILITY
+    constexpr /* Not constexpr under GCC < 4.7 */
+    #endif
+    Color3ub b(a);
+    CORRADE_COMPARE(b, Color3ub(10, 12, 0));
 
-    constexpr Color4 c(1.0f, 0.5f, 0.75f, 0.25f);
-    constexpr Color4d d(c);
-    CORRADE_COMPARE(d, Color4d(1.0, 0.5, 0.75, 0.25));
+    constexpr Color4 c(10.1f, 12.5f, 0.75f, 5.25f);
+    #ifndef CORRADE_GCC46_COMPATIBILITY
+    constexpr /* Not constexpr under GCC < 4.7 */
+    #endif
+    Color4ub d(c);
+    CORRADE_COMPARE(d, Color4ub(10, 12, 0, 5));
 
     /* Implicit conversion is not allowed */
-    CORRADE_VERIFY(!(std::is_convertible<Color3, Color3d>::value));
-    CORRADE_VERIFY(!(std::is_convertible<Color4, Color4d>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Color3, Color3ub>::value));
+    CORRADE_VERIFY(!(std::is_convertible<Color4, Color4ub>::value));
 }
 
 void ColorTest::constructNormalization() {
@@ -287,16 +296,36 @@ void ColorTest::swizzleType() {
     constexpr Color3 origColor3;
     constexpr BasicColor4<UnsignedByte> origColor4;
 
-    constexpr auto a = Math::swizzle<'y', 'z', 'r'>(origColor3);
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr
+    #else
+    const
+    #endif
+    auto a = Math::swizzle<'y', 'z', 'r'>(origColor3);
     CORRADE_VERIFY((std::is_same<decltype(a), const Color3>::value));
 
-    constexpr auto b = Math::swizzle<'y', 'z', 'a'>(origColor4);
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr
+    #else
+    const
+    #endif
+    auto b = Math::swizzle<'y', 'z', 'a'>(origColor4);
     CORRADE_VERIFY((std::is_same<decltype(b), const BasicColor3<UnsignedByte>>::value));
 
-    constexpr auto c = Math::swizzle<'y', 'z', 'y', 'x'>(origColor3);
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr
+    #else
+    const
+    #endif
+    auto c = Math::swizzle<'y', 'z', 'y', 'x'>(origColor3);
     CORRADE_VERIFY((std::is_same<decltype(c), const Color4>::value));
 
-    constexpr auto d = Math::swizzle<'y', 'a', 'y', 'x'>(origColor4);
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr
+    #else
+    const
+    #endif
+    auto d = Math::swizzle<'y', 'a', 'y', 'x'>(origColor4);
     CORRADE_VERIFY((std::is_same<decltype(d), const BasicColor4<UnsignedByte>>::value));
 }
 

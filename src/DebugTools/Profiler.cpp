@@ -112,11 +112,20 @@ void Profiler::printStatistics() {
     std::vector<std::size_t> totalSorted(sections.size());
     std::iota(totalSorted.begin(), totalSorted.end(), 0);
 
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     std::sort(totalSorted.begin(), totalSorted.end(), [this](std::size_t i, std::size_t j){return totalData[i] > totalData[j];});
+    #else
+    std::sort(totalSorted.begin(), totalSorted.end(), Compare(this));
+    #endif
 
     Debug() << "Statistics for last" << measureDuration << "frames:";
     for(std::size_t i = 0; i != sections.size(); ++i)
-        Debug() << " " << sections[totalSorted[i]] << duration_cast<microseconds>(totalData[totalSorted[i]]).count()/frameCount << u8"µs";
+        Debug() << " " << sections[totalSorted[i]] << duration_cast<microseconds>(totalData[totalSorted[i]]).count()/frameCount
+                #if !defined(CORRADE_GCC44_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+                << u8"µs";
+                #else
+                << "µs";
+                #endif
 }
 
 }}

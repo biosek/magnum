@@ -82,7 +82,9 @@ void Tipsify::operator()(std::size_t cacheSize) {
 
         /* Go through candidates in 1-ring around fanning vertex */
         Int candidatePriority = -1;
-        for(UnsignedInt v: candidates) {
+        for(auto it = candidates.begin(); it != candidates.end(); ++it) {
+            UnsignedInt v = *it;
+
             /* Skip if it doesn't have any live triangles */
             if(!liveTriangleCount[v]) continue;
 

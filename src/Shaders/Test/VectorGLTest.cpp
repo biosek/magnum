@@ -22,17 +22,38 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "Math/Geometry/Rectangle.h"
+#include "Shaders/Vector.h"
+#include "Test/AbstractOpenGLTester.h"
 
-namespace Corrade { namespace Utility {
-
-#ifndef DOXYGEN_GENERATING_OUTPUT
-template struct ConfigurationValue<Magnum::Math::Geometry::Rectangle<Magnum::Float>>;
-template struct ConfigurationValue<Magnum::Math::Geometry::Rectangle<Magnum::Int>>;
-template struct ConfigurationValue<Magnum::Math::Geometry::Rectangle<Magnum::UnsignedInt>>;
-#ifndef MAGNUM_TARGET_GLES
-template struct ConfigurationValue<Magnum::Math::Geometry::Rectangle<Magnum::Double>>;
-#endif
+#ifdef MAGNUM_BUILD_STATIC
+#include "Shaders/magnumShadersResourceImport.hpp"
 #endif
 
-}}
+namespace Magnum { namespace Shaders { namespace Test {
+
+class VectorGLTest: public Magnum::Test::AbstractOpenGLTester {
+    public:
+        explicit VectorGLTest();
+
+        void compile2D();
+        void compile3D();
+};
+
+VectorGLTest::VectorGLTest() {
+    addTests({&VectorGLTest::compile2D,
+              &VectorGLTest::compile3D});
+}
+
+void VectorGLTest::compile2D() {
+    Shaders::Vector2D shader;
+    CORRADE_VERIFY(shader.validate().first);
+}
+
+void VectorGLTest::compile3D() {
+    Shaders::Vector3D shader;
+    CORRADE_VERIFY(shader.validate().first);
+}
+
+}}}
+
+CORRADE_TEST_MAIN(Magnum::Shaders::Test::VectorGLTest)

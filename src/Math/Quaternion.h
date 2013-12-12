@@ -513,7 +513,7 @@ template<class T> inline Quaternion<T> Quaternion<T>::slerp(const Quaternion<T>&
 template<class T> inline Quaternion<T> Quaternion<T>::rotation(const Rad<T> angle, const Vector3<T>& normalizedAxis) {
     CORRADE_ASSERT(normalizedAxis.isNormalized(),
         "Math::Quaternion::rotation(): axis must be normalized", {});
-    return {normalizedAxis*std::sin(T(angle)/2), std::cos(T(angle)/2)};
+    return {normalizedAxis*std::sin(angle.toUnderlyingType()/2), std::cos(angle.toUnderlyingType()/2)};
 }
 
 template<class T> inline Quaternion<T> Quaternion<T>::fromMatrix(const Matrix<3, T>& matrix) {

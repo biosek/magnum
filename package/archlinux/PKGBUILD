@@ -1,27 +1,23 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum
-pkgver=dev.gcc47
+pkgver=dev
 pkgrel=1
-pkgdesc="C++11 and OpenGL 2D/3D graphics engine (built with GCC 4.7)"
+pkgdesc="C++11 and OpenGL 2D/3D graphics engine"
 arch=('i686' 'x86_64')
-url="https://github.com/mosra/magnum"
+url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('corrade' 'openal' 'freeglut' 'sdl2')
-makedepends=('cmake' 'ninja' 'gcc47')
+makedepends=('cmake' 'ninja')
 options=(!strip)
 provides=('magnum-git')
 
 build() {
-    if [ ! -d "$startdir/build-gcc47" ] ; then
-        mkdir "$startdir/build-gcc47"
-        cd "$startdir/build-gcc47"
+    mkdir -p "$startdir/build"
+    cd "$startdir/build/"
 
-        cmake .. \
-            -DCMAKE_CXX_COMPILER=g++-4.7 \
-            -G Ninja
-    fi
-
-    cd "$startdir/build-gcc47"
+    # Disable optimization (saves A LOT of compilation time)
+    newcxxflags=$(echo $CXXFLAGS | sed s/-O.//g | sed s/-D_FORTIFY_SOURCE=.//g)
+    export CXXFLAGS="$newcxxflags"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
@@ -39,16 +35,17 @@ build() {
         -DWITH_FONTCONVERTER=ON \
         -DWITH_MAGNUMINFO=ON \
         -DBUILD_TESTS=ON \
-        -DBUILD_GL_TESTS=ON
+        -DBUILD_GL_TESTS=ON \
+        -G Ninja
     ninja
 }
 
 check() {
-    cd "$startdir/build-gcc47"
+    cd "$startdir/build"
     ctest --output-on-failure
 }
 
 package() {
-    cd "$startdir/build-gcc47"
+    cd "$startdir/build"
     DESTDIR="$pkgdir/" ninja install
 }

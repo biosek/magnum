@@ -39,7 +39,7 @@ class GenerateFlatNormalsTest: public TestSuite::Tester {
 };
 
 GenerateFlatNormalsTest::GenerateFlatNormalsTest() {
-    addTests({&GenerateFlatNormalsTest::wrongIndexCount,
+    addTests<GenerateFlatNormalsTest>({&GenerateFlatNormalsTest::wrongIndexCount,
               &GenerateFlatNormalsTest::generate});
 }
 
@@ -50,7 +50,7 @@ void GenerateFlatNormalsTest::wrongIndexCount() {
     std::vector<Vector3> normals;
     std::tie(indices, normals) = MeshTools::generateFlatNormals({
         0, 1
-    }, {});
+    }, std::vector<Vector3>{});
 
     CORRADE_COMPARE(indices.size(), 0);
     CORRADE_COMPARE(normals.size(), 0);
@@ -64,7 +64,7 @@ void GenerateFlatNormalsTest::generate() {
     std::tie(indices, normals) = MeshTools::generateFlatNormals({
         0, 1, 2,
         1, 2, 3
-    }, {
+    }, std::vector<Vector3>{
         {-1.0f, 0.0f, 0.0f},
         {0.0f, -1.0f, 0.0f},
         {0.0f, 1.0f, 0.0f},

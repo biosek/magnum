@@ -134,12 +134,28 @@ class MAGNUM_EXPORT PhongMaterialData: public AbstractMaterialData {
         Float shininess() const { return _shininess; }
 
     private:
+        #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
         union Source {
             Source() {}
 
-            Vector3 color;
-            UnsignedInt texture;
+            public:
+                Vector3& color() { return _color; }
+                UnsignedInt& texture() { return _texture; }
+
+            private:
+                Vector3 _color;
+                UnsignedInt _texture;
         };
+        #else
+        class Source {
+            public:
+                Vector3& color() { return *reinterpret_cast<Vector3*>(&data); }
+                UnsignedInt& texture() { return *reinterpret_cast<UnsignedInt*>(&data); }
+
+            private:
+                char data[sizeof(Vector3)];
+        };
+        #endif
 
         Source _ambient,
             _diffuse,

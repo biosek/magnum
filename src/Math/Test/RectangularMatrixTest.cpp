@@ -103,7 +103,7 @@ typedef Vector<3, Int> Vector3i;
 typedef Vector<2, Int> Vector2i;
 
 RectangularMatrixTest::RectangularMatrixTest() {
-    addTests({&RectangularMatrixTest::construct,
+    addTests<RectangularMatrixTest>({&RectangularMatrixTest::construct,
               &RectangularMatrixTest::constructDefault,
               &RectangularMatrixTest::constructConversion,
               &RectangularMatrixTest::constructFromData,
@@ -227,7 +227,12 @@ void RectangularMatrixTest::convert() {
 
     /* Implicit conversion is not allowed */
     CORRADE_VERIFY(!(std::is_convertible<Mat2x3, Matrix2x3>::value));
-    CORRADE_VERIFY(!(std::is_convertible<Matrix2x3, Mat2x3>::value));
+    {
+        #ifdef CORRADE_GCC44_COMPATIBILITY
+        CORRADE_EXPECT_FAIL("GCC 4.4 doesn't have explicit conversion operators");
+        #endif
+        CORRADE_VERIFY(!(std::is_convertible<Matrix2x3, Mat2x3>::value));
+    }
 }
 
 void RectangularMatrixTest::data() {
@@ -417,7 +422,8 @@ void RectangularMatrixTest::vector() {
 
 template<std::size_t size, class T> class BasicMat: public Math::RectangularMatrix<size, size, T> {
     public:
-        template<class ...U> BasicMat(U&&... args): Math::RectangularMatrix<size, size, T>{std::forward<U>(args)...} {}
+        /* MSVC 2013 can't cope with {} here */
+        template<class ...U> BasicMat(U&&... args): Math::RectangularMatrix<size, size, T>(std::forward<U>(args)...) {}
 
         MAGNUM_RECTANGULARMATRIX_SUBCLASS_IMPLEMENTATION(size, size, BasicMat<size, T>)
 };
@@ -426,7 +432,8 @@ MAGNUM_MATRIX_OPERATOR_IMPLEMENTATION(BasicMat<size, T>)
 
 template<class T> class BasicMat2x2: public BasicMat<2, T> {
     public:
-        template<class ...U> BasicMat2x2(U&&... args): BasicMat<2, T>{std::forward<U>(args)...} {}
+        /* MSVC 2013 can't cope with {} here */
+        template<class ...U> BasicMat2x2(U&&... args): BasicMat<2, T>(std::forward<U>(args)...) {}
 
         MAGNUM_RECTANGULARMATRIX_SUBCLASS_IMPLEMENTATION(2, 2, BasicMat2x2<T>)
 };

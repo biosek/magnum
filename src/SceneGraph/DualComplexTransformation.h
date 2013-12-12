@@ -117,20 +117,9 @@ template<class T> class BasicDualComplexTransformation: public AbstractBasicTran
             return transformInternal(Math::DualComplex<T>::rotation(angle), type);
         }
 
-        /**
-         * @brief Move object in stacking order
-         * @param under     Sibling object under which to move or `nullptr`,
-         *      if you want to move it above all.
-         * @return Reference to self (for method chaining)
-         */
-        Object<BasicDualComplexTransformation<T>>& move(Object<BasicDualComplexTransformation<T>>* under) {
-            static_cast<Object<BasicDualComplexTransformation>*>(this)->Containers::template LinkedList<Object<BasicDualComplexTransformation<T>>>::move(this, under);
-            return static_cast<Object<BasicDualComplexTransformation<T>>&>(*this);
-        }
-
     protected:
         /* Allow construction only from Object */
-        explicit BasicDualComplexTransformation() = default;
+        explicit BasicDualComplexTransformation();
 
     private:
         void doResetTransformation() override final { resetTransformation(); }
@@ -140,7 +129,7 @@ template<class T> class BasicDualComplexTransformation: public AbstractBasicTran
         }
 
         void doRotate(Math::Rad<T> angle, TransformationType type) override final {
-            doRotate(angle, type);
+            rotate(angle, type);
         }
 
         /* No assertions fired, for internal use */
@@ -164,6 +153,8 @@ template<class T> class BasicDualComplexTransformation: public AbstractBasicTran
 
         Math::DualComplex<T> _transformation;
 };
+
+template<class T> inline BasicDualComplexTransformation<T>::BasicDualComplexTransformation() = default;
 
 /**
 @brief Two-dimensional transformation for float scenes implemented using dual complex numbers
@@ -193,6 +184,10 @@ template<class T> struct Transformation<BasicDualComplexTransformation<T>> {
 };
 
 }
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT Object<BasicDualComplexTransformation<Float>>;
+#endif
 
 }}
 

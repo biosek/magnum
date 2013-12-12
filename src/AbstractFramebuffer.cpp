@@ -139,7 +139,7 @@ FramebufferTarget AbstractFramebuffer::bindInternal() {
     #endif
 }
 
-void AbstractFramebuffer::blit(AbstractFramebuffer& source, AbstractFramebuffer& destination, const Rectanglei& sourceRectangle, const Rectanglei& destinationRectangle, FramebufferBlitMask mask, FramebufferBlitFilter filter) {
+void AbstractFramebuffer::blit(AbstractFramebuffer& source, AbstractFramebuffer& destination, const Range2Di& sourceRectangle, const Range2Di& destinationRectangle, FramebufferBlitMask mask, FramebufferBlitFilter filter) {
     source.bindInternal(FramebufferTarget::Read);
     destination.bindInternal(FramebufferTarget::Draw);
     /** @todo Get some extension wrangler instead to avoid undeclared glBlitFramebuffer() on ES2 */
@@ -153,7 +153,7 @@ void AbstractFramebuffer::blit(AbstractFramebuffer& source, AbstractFramebuffer&
     #endif
 }
 
-AbstractFramebuffer& AbstractFramebuffer::setViewport(const Rectanglei& rectangle) {
+AbstractFramebuffer& AbstractFramebuffer::setViewport(const Range2Di& rectangle) {
     _viewport = rectangle;
 
     /* Update the viewport if the framebuffer is currently bound */
@@ -174,7 +174,7 @@ void AbstractFramebuffer::setViewportInternal() {
 
     /* Update the state and viewport */
     state->viewport = _viewport;
-    glViewport(_viewport.left(), _viewport.bottom(), _viewport.width(), _viewport.height());
+    glViewport(_viewport.left(), _viewport.bottom(), _viewport.sizeX(), _viewport.sizeY());
 }
 
 void AbstractFramebuffer::clear(FramebufferClearMask mask) {
@@ -227,10 +227,10 @@ void AbstractFramebuffer::invalidateImplementation(GLsizei count, GLenum* attach
     #endif
 }
 
-void AbstractFramebuffer::invalidateImplementation(GLsizei count, GLenum* attachments, const Rectanglei& rectangle) {
+void AbstractFramebuffer::invalidateImplementation(GLsizei count, GLenum* attachments, const Range2Di& rectangle) {
     /** @todo Re-enable when extension wrangler is available for ES2 */
     #ifndef MAGNUM_TARGET_GLES2
-    glInvalidateSubFramebuffer(GLenum(bindInternal()), count, attachments, rectangle.left(), rectangle.bottom(), rectangle.width(), rectangle.height());
+    glInvalidateSubFramebuffer(GLenum(bindInternal()), count, attachments, rectangle.left(), rectangle.bottom(), rectangle.sizeX(), rectangle.sizeY());
     #else
     //glDiscardSubFramebufferEXT(GLenum(bindInternal()), count, attachments, rectangle.left(), rectangle.bottom(), rectangle.width(), rectangle.height());
     static_cast<void>(count);
@@ -277,7 +277,6 @@ void AbstractFramebuffer::initializeContextBasedFunctionality(Context& context) 
     else readTarget = drawTarget = FramebufferTarget::ReadDraw;
     #endif
 
-    #ifndef MAGNUM_TARGET_GLES3
     #ifndef MAGNUM_TARGET_GLES
     if(context.isExtensionSupported<Extensions::GL::ARB::robustness>())
     #else
@@ -295,9 +294,6 @@ void AbstractFramebuffer::initializeContextBasedFunctionality(Context& context) 
         readImplementation = &AbstractFramebuffer::readImplementationRobustness;
         #endif
     }
-    #else
-    static_cast<void>(context);
-    #endif
 }
 
 GLenum AbstractFramebuffer::checkStatusImplementationDefault(const FramebufferTarget target) {
@@ -380,7 +376,6 @@ void AbstractFramebuffer::readImplementationDefault(const Vector2i& offset, cons
     glReadPixels(offset.x(), offset.y(), size.x(), size.y(), GLenum(format), GLenum(type), data);
 }
 
-#ifndef MAGNUM_TARGET_GLES3
 void AbstractFramebuffer::readImplementationRobustness(const Vector2i& offset, const Vector2i& size, const ColorFormat format, const ColorType type, const std::size_t dataSize, GLvoid* const data) {
     /** @todo Enable when extension wrangler for ES is available */
     #ifndef MAGNUM_TARGET_GLES
@@ -396,6 +391,5 @@ void AbstractFramebuffer::readImplementationRobustness(const Vector2i& offset, c
     static_cast<void>(data);
     #endif
 }
-#endif
 
 }

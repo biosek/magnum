@@ -49,7 +49,7 @@ class AbstractShaderProgramTest: public TestSuite::Tester {
 };
 
 AbstractShaderProgramTest::AbstractShaderProgramTest() {
-    addTests({&AbstractShaderProgramTest::attributeScalar,
+    addTests<AbstractShaderProgramTest>({&AbstractShaderProgramTest::attributeScalar,
               &AbstractShaderProgramTest::attributeScalarInt,
               &AbstractShaderProgramTest::attributeScalarUnsignedInt,
               &AbstractShaderProgramTest::attributeScalarDouble,
@@ -67,7 +67,7 @@ AbstractShaderProgramTest::AbstractShaderProgramTest() {
 
 void AbstractShaderProgramTest::attributeScalar() {
     typedef AbstractShaderProgram::Attribute<3, Float> Attribute;
-    CORRADE_COMPARE(Attribute::Location, 3);
+    CORRADE_COMPARE(Int(Attribute::Location), 3);
 
     /* Default constructor */
     Attribute a;

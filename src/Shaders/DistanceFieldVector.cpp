@@ -41,11 +41,14 @@ namespace {
 template<UnsignedInt dimensions> DistanceFieldVector<dimensions>::DistanceFieldVector(): transformationProjectionMatrixUniform(0), colorUniform(1), outlineColorUniform(2), outlineRangeUniform(3), smoothnessUniform(4) {
     Utility::Resource rs("MagnumShaders");
 
+    /* Weird bug in GCC 4.5 - cannot use initializer list here, although the
+       same thing works in PhongShader flawlessly */
     #ifndef MAGNUM_TARGET_GLES
-    const Version version = Context::current()->supportedVersion({Version::GL320, Version::GL310, Version::GL300, Version::GL210});
+    std::initializer_list<Version> vs{Version::GL320, Version::GL310, Version::GL300, Version::GL210};
     #else
-    const Version version = Context::current()->supportedVersion({Version::GLES300, Version::GLES200});
+    std::initializer_list<Version> vs{Version::GLES300, Version::GLES200};
     #endif
+    Version version = Context::current()->supportedVersion(vs);
 
     Shader frag(version, Shader::Type::Vertex);
     frag.addSource(rs.get("compatibility.glsl"))

@@ -76,7 +76,7 @@ void AbstractImporter::doOpenFile(const std::string& filename) {
 
     /* Create array to hold file contents */
     in.seekg(0, std::ios::end);
-    Containers::Array<unsigned char> data(in.tellg());
+    Containers::Array<unsigned char> data(std::size_t(in.tellg()));
 
     /* Read data, close */
     in.seekg(0, std::ios::beg);
@@ -218,7 +218,13 @@ std::unique_ptr<ObjectData2D> AbstractImporter::object2D(const UnsignedInt id) {
     return doObject2D(id);
 }
 
-std::unique_ptr<ObjectData2D> AbstractImporter::doObject2D(UnsignedInt) { return nullptr; }
+std::unique_ptr<ObjectData2D> AbstractImporter::doObject2D(UnsignedInt) {
+    #ifndef CORRADE_GCC45_COMPATIBILITY
+    return nullptr;
+    #else
+    return {};
+    #endif
+}
 
 UnsignedInt AbstractImporter::object3DCount() const {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::object3DCount(): no file opened", {});
@@ -248,7 +254,13 @@ std::unique_ptr<ObjectData3D> AbstractImporter::object3D(const UnsignedInt id) {
     return doObject3D(id);
 }
 
-std::unique_ptr<ObjectData3D> AbstractImporter::doObject3D(UnsignedInt) { return nullptr; }
+std::unique_ptr<ObjectData3D> AbstractImporter::doObject3D(UnsignedInt) {
+    #ifndef CORRADE_GCC45_COMPATIBILITY
+    return nullptr;
+    #else
+    return {};
+    #endif
+}
 
 UnsignedInt AbstractImporter::mesh2DCount() const {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::mesh2DCount(): no file opened", {});
@@ -338,7 +350,13 @@ std::unique_ptr<AbstractMaterialData> AbstractImporter::material(const UnsignedI
     return doMaterial(id);
 }
 
-std::unique_ptr<AbstractMaterialData> AbstractImporter::doMaterial(UnsignedInt) { return nullptr; }
+std::unique_ptr<AbstractMaterialData> AbstractImporter::doMaterial(UnsignedInt) {
+    #ifndef CORRADE_GCC45_COMPATIBILITY
+    return nullptr;
+    #else
+    return {};
+    #endif
+}
 
 UnsignedInt AbstractImporter::textureCount() const {
     CORRADE_ASSERT(isOpened(), "Trade::AbstractImporter::textureCount(): no file opened", {});

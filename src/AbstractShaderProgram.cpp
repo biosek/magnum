@@ -24,6 +24,8 @@
 
 #include "AbstractShaderProgram.h"
 
+#include <algorithm> /* std::max(), needed by MSVC */
+
 #include "Math/RectangularMatrix.h"
 #include "Extensions.h"
 #include "Shader.h"
@@ -762,7 +764,6 @@ std::size_t FloatAttribute::size(GLint components, DataType dataType) {
     }
 
     CORRADE_ASSERT_UNREACHABLE();
-    return 0;
 }
 
 #ifndef MAGNUM_TARGET_GLES2
@@ -780,7 +781,6 @@ std::size_t IntAttribute::size(GLint components, DataType dataType) {
     }
 
     CORRADE_ASSERT_UNREACHABLE();
-    return 0;
 }
 #endif
 
@@ -792,7 +792,6 @@ std::size_t DoubleAttribute::size(GLint components, DataType dataType) {
     }
 
     CORRADE_ASSERT_UNREACHABLE();
-    return 0;
 }
 #endif
 
@@ -827,7 +826,6 @@ std::size_t Attribute<Math::Vector<4, Float>>::size(GLint components, DataType d
     }
 
     CORRADE_ASSERT_UNREACHABLE();
-    return 0;
 }
 
 Debug operator<<(Debug debug, SizedAttribute<1, 1>::Components value) {

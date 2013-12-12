@@ -32,6 +32,7 @@
 #include <initializer_list>
 #include <string>
 #include <vector>
+#include <corradeCompatibility.h>
 
 #include "Types.h"
 #include "magnumDebugToolsVisibility.h"
@@ -114,7 +115,13 @@ class MAGNUM_DEBUGTOOLS_EXPORT Profiler {
          */
         static const Section otherSection = 0;
 
-        explicit Profiler(): enabled(false), measureDuration(60), currentFrame(0), frameCount(0), sections{"Other"}, currentSection(otherSection) {}
+        explicit Profiler(): enabled(false), measureDuration(60), currentFrame(0), frameCount(0),
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            sections{"Other"},
+            #else
+            sections({"Other"}),
+            #endif
+            currentSection(otherSection) {}
 
         /**
          * @brief Set measure duration
@@ -198,6 +205,19 @@ class MAGNUM_DEBUGTOOLS_EXPORT Profiler {
         void printStatistics();
 
     private:
+        #if !defined(DOXYGEN_GENERATING_OUTPUT) && defined(CORRADE_GCC44_COMPATIBILITY)
+        struct Compare {
+            public:
+                inline Compare(const Profiler* p): p(p) {}
+                inline bool operator()(size_t i, size_t j) const {
+                    return p->totalData[i] > p->totalData[j];
+                }
+
+            private:
+                const Profiler* p;
+        };
+        #endif
+
         void save();
 
         bool enabled;

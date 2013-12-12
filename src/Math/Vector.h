@@ -122,7 +122,12 @@ template<std::size_t size, class T> class Vector {
         #ifdef DOXYGEN_GENERATING_OUTPUT
         template<class ...U> constexpr /*implicit*/ Vector(T first, U... next);
         #else
-        template<class ...U, class V = typename std::enable_if<sizeof...(U)+1 == size, T>::type> constexpr /*implicit*/ Vector(T first, U... next): _data{first, next...} {}
+        template<class ...U, class V = typename std::enable_if<sizeof...(U)+1 == size, T>::type> constexpr /*implicit*/ Vector(T first, U... next):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{first, next...} {}
+            #else
+            _data({first, next...}) {}
+            #endif
         #endif
 
         /** @brief Construct vector with one value for all fields */
@@ -161,7 +166,12 @@ template<std::size_t size, class T> class Vector {
         #ifndef CORRADE_GCC46_COMPATIBILITY
         template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::from(std::declval<U>()))> constexpr explicit Vector(const U& other): Vector(Implementation::VectorConverter<size, T, U>::from(other)) {}
         #else
-        template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::from(std::declval<U>()))> explicit Vector(const U& other) {
+        #ifndef CORRADE_GCC44_COMPATIBILITY
+        template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::from(std::declval<U>()))> explicit Vector(const U& other)
+        #else
+        template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::from(*static_cast<const U*>(nullptr)))> explicit Vector(const U& other)
+        #endif
+        {
             *this = Implementation::VectorConverter<size, T, U>::from(other);
         }
         #endif
@@ -173,7 +183,12 @@ template<std::size_t size, class T> class Vector {
         Vector<size, T>& operator=(const Vector<size, T>&) = default;
 
         /** @brief Convert vector to external representation */
-        template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::to(std::declval<Vector<size, T>>()))> constexpr explicit operator U() const {
+        #ifndef CORRADE_GCC44_COMPATIBILITY
+        template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::to(std::declval<Vector<size, T>>()))> constexpr explicit operator U() const
+        #else
+        template<class U, class V = decltype(Implementation::VectorConverter<size, T, U>::to(*static_cast<const Vector<size, T>*>(nullptr)))> constexpr operator U() const
+        #endif
+        {
             /** @bug Why this is not constexpr under GCC 4.6? */
             return Implementation::VectorConverter<size, T, U>::to(*this);
         }
@@ -185,19 +200,27 @@ template<std::size_t size, class T> class Vector {
          * @see operator[]()
          */
         T* data()
-        #ifndef CORRADE_GCC47_COMPATIBILITY
+        #if !defined(CORRADE_GCC47_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
         &
         #endif
+        #ifndef CORRADE_MSVC2013_COMPATIBILITY
         { return _data; }
+        #else
+        { return _data.data(); }
+        #endif
 
         /** @overload */
         constexpr const T* data()
-        #ifndef CORRADE_GCC47_COMPATIBILITY
+        #if !defined(CORRADE_GCC47_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
         const &
         #else
         const
         #endif
+        #ifndef CORRADE_MSVC2013_COMPATIBILITY
         { return _data; }
+        #else
+        { return _data.data(); }
+        #endif
 
         /**
          * @brief Value at given position
@@ -514,25 +537,39 @@ template<std::size_t size, class T> class Vector {
         /**
          * @brief Minimal value in the vector
          *
-         * @see Math::min()
+         * @see @ref Math::min(), @ref Vector2::minmax()
          */
         T min() const;
 
         /**
          * @brief Maximal value in the vector
          *
-         * @see Math::max()
+         * @see @ref Math::max(), @ref Vector2::minmax()
          */
         T max() const;
 
     private:
         /* Implementation for Vector<size, T>::Vector(const Vector<size, U>&) */
-        template<class U, std::size_t ...sequence> constexpr explicit Vector(Implementation::Sequence<sequence...>, const Vector<sizeof...(sequence), U>& vector): _data{T(vector._data[sequence])...} {}
+        template<class U, std::size_t ...sequence> constexpr explicit Vector(Implementation::Sequence<sequence...>, const Vector<size, U>& vector):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{T(vector._data[sequence])...} {}
+            #else
+            _data({T(vector._data[sequence])...}) {}
+            #endif
 
         /* Implementation for Vector<size, T>::Vector(U) */
-        template<std::size_t ...sequence> constexpr explicit Vector(Implementation::Sequence<sequence...>, T value): _data{Implementation::repeat(value, sequence)...} {}
+        template<std::size_t ...sequence> constexpr explicit Vector(Implementation::Sequence<sequence...>, T value):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{Implementation::repeat(value, sequence)...} {}
+            #else
+            _data({Implementation::repeat(value, sequence)...}) {}
+            #endif
 
+        #ifndef CORRADE_MSVC2013_COMPATIBILITY
         T _data[size];
+        #else
+        std::array<T, size> _data;
+        #endif
 };
 
 /** @relates Vector
@@ -857,7 +894,7 @@ typename std::enable_if<std::is_integral<Integral>::value && std::is_floating_po
 #endif
 operator*=(Vector<size, Integral>& vector, FloatingPoint number) {
     for(std::size_t i = 0; i != size; ++i)
-        vector[i] *= number;
+        vector[i] = Integral(vector[i]*number);
 
     return vector;
 }
@@ -908,7 +945,7 @@ typename std::enable_if<std::is_integral<Integral>::value && std::is_floating_po
 #endif
 operator/=(Vector<size, Integral>& vector, FloatingPoint number) {
     for(std::size_t i = 0; i != size; ++i)
-        vector[i] /= number;
+        vector[i] = Integral(vector[i]/number);
 
     return vector;
 }
@@ -944,7 +981,7 @@ typename std::enable_if<std::is_integral<Integral>::value && std::is_floating_po
 #endif
 operator*=(Vector<size, Integral>& a, const Vector<size, FloatingPoint>& b) {
     for(std::size_t i = 0; i != size; ++i)
-        a[i] *= b[i];
+        a[i] = Integral(a[i]*b[i]);
 
     return a;
 }
@@ -997,7 +1034,7 @@ typename std::enable_if<std::is_integral<Integral>::value && std::is_floating_po
 #endif
 operator/=(Vector<size, Integral>& a, const Vector<size, FloatingPoint>& b) {
     for(std::size_t i = 0; i != size; ++i)
-        a[i] /= b[i];
+        a[i] = Integral(a[i]/b[i]);
 
     return a;
 }

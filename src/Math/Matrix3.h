@@ -143,7 +143,11 @@ template<class T> class Matrix3: public Matrix<3, T> {
         template<class U> constexpr explicit Matrix3(const RectangularMatrix<3, 3, U>& other): Matrix<3, T>(other) {}
 
         /** @brief Construct matrix from external representation */
+        #ifndef CORRADE_GCC44_COMPATIBILITY
         template<class U, class V = decltype(Implementation::RectangularMatrixConverter<3, 3, T, U>::from(std::declval<U>()))> constexpr explicit Matrix3(const U& other): Matrix<3, T>(Implementation::RectangularMatrixConverter<3, 3, T, U>::from(other)) {}
+        #else
+        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<3, 3, T, U>::from(*static_cast<const U*>(nullptr)))> constexpr explicit Matrix3(const U& other): Matrix<3, T>(Implementation::RectangularMatrixConverter<3, 3, T, U>::from(other)) {}
+        #endif
 
         /** @brief Copy constructor */
         constexpr Matrix3(const RectangularMatrix<3, 3, T>& other): Matrix<3, T>(other) {}
@@ -282,7 +286,13 @@ template<class T> class Matrix3: public Matrix<3, T> {
          * @todo extract 2x2 matrix and multiply directly? (benchmark that)
          */
         Vector2<T> transformVector(const Vector2<T>& vector) const {
+            /* Workaround for GCC 4.4 strict-aliasing fascism */
+            #ifndef CORRADE_GCC44_COMPATIBILITY
             return ((*this)*Vector3<T>(vector, T(0))).xy();
+            #else
+            const auto v = (*this)*Vector3<T>(vector, T(0));
+            return v.xy();
+            #endif
         }
 
         /**
@@ -295,7 +305,13 @@ template<class T> class Matrix3: public Matrix<3, T> {
          * @see DualComplex::transformPoint(), Matrix4::transformPoint()
          */
         Vector2<T> transformPoint(const Vector2<T>& vector) const {
+            /* Workaround for GCC 4.4 strict-aliasing fascism */
+            #ifndef CORRADE_GCC44_COMPATIBILITY
             return ((*this)*Vector3<T>(vector, T(1))).xy();
+            #else
+            const auto v = (*this)*Vector3<T>(vector, T(1));
+            return v.xy();
+            #endif
         }
 
         MAGNUM_RECTANGULARMATRIX_SUBCLASS_IMPLEMENTATION(3, 3, Matrix3<T>)
@@ -310,8 +326,8 @@ template<class T> inline Corrade::Utility::Debug operator<<(Corrade::Utility::De
 }
 
 template<class T> Matrix3<T> Matrix3<T>::rotation(const Rad<T> angle) {
-    const T sine = std::sin(T(angle));
-    const T cosine = std::cos(T(angle));
+    const T sine = std::sin(angle.toUnderlyingType());
+    const T cosine = std::cos(angle.toUnderlyingType());
 
     return {{ cosine,   sine, T(0)},
             {  -sine, cosine, T(0)},

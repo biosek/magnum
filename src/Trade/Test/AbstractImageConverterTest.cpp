@@ -43,7 +43,7 @@ class AbstractImageConverterTest: public TestSuite::Tester {
 };
 
 AbstractImageConverterTest::AbstractImageConverterTest() {
-    addTests({&AbstractImageConverterTest::exportToFile});
+    addTests<AbstractImageConverterTest>({&AbstractImageConverterTest::exportToFile});
 }
 
 void AbstractImageConverterTest::exportToFile() {
@@ -53,8 +53,8 @@ void AbstractImageConverterTest::exportToFile() {
 
             Containers::Array<unsigned char> doExportToData(const ImageReference2D& image) const override {
                 Containers::Array<unsigned char> out(2);
-                out[0] = image.size().x();
-                out[1] = image.size().y();
+                out[0] = static_cast<unsigned char>(image.size().x());
+                out[1] = static_cast<unsigned char>(image.size().y());
                 return out;
             };
     };

@@ -128,8 +128,9 @@ void AbstractTexture::destroy() {
     if(!_id) return;
 
     /* Remove all bindings */
-    for(GLuint& binding: Context::current()->state().texture->bindings)
-        if(binding == _id) binding = 0;
+    std::vector<GLuint>& bindings = Context::current()->state().texture->bindings;
+    for(auto it = bindings.begin(); it != bindings.end(); ++it)
+        if(*it == _id) *it = 0;
 
     glDeleteTextures(1, &_id);
 }
@@ -366,9 +367,7 @@ ColorFormat AbstractTexture::imageFormatForInternalFormat(const TextureFormat in
         case TextureFormat::RGB5:
         #endif
         case TextureFormat::RGB565:
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::RGB10:
-        #endif
         #ifndef MAGNUM_TARGET_GLES
         case TextureFormat::RGB12:
         #endif
@@ -376,9 +375,7 @@ ColorFormat AbstractTexture::imageFormatForInternalFormat(const TextureFormat in
         case TextureFormat::R11FG11FB10F:
         case TextureFormat::RGB9E5:
         #endif
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::SRGB:
-        #endif
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::SRGB8:
         #endif
@@ -421,9 +418,7 @@ ColorFormat AbstractTexture::imageFormatForInternalFormat(const TextureFormat in
         #ifndef MAGNUM_TARGET_GLES
         case TextureFormat::RGBA12:
         #endif
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::SRGBAlpha:
-        #endif
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::SRGB8Alpha8:
         #endif
@@ -455,9 +450,7 @@ ColorFormat AbstractTexture::imageFormatForInternalFormat(const TextureFormat in
         case TextureFormat::DepthComponent:
         case TextureFormat::DepthComponent16:
         case TextureFormat::DepthComponent24:
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::DepthComponent32:
-        #endif
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::DepthComponent32F:
         #endif
@@ -501,10 +494,8 @@ ColorType AbstractTexture::imageTypeForInternalFormat(const TextureFormat intern
         case TextureFormat::Luminance:
         case TextureFormat::LuminanceAlpha:
         #endif
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::SRGB:
         case TextureFormat::SRGBAlpha:
-        #endif
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::SRGB8:
         case TextureFormat::SRGB8Alpha8:
@@ -619,9 +610,7 @@ ColorType AbstractTexture::imageTypeForInternalFormat(const TextureFormat intern
         case TextureFormat::RGB565:
             return ColorType::UnsignedShort565;
 
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::RGB10:
-        #endif
         case TextureFormat::RGB10A2:
         #ifndef MAGNUM_TARGET_GLES2
         case TextureFormat::RGB10A2UI:
@@ -640,9 +629,7 @@ ColorType AbstractTexture::imageTypeForInternalFormat(const TextureFormat intern
 
         case TextureFormat::DepthComponent:
         case TextureFormat::DepthComponent24:
-        #ifndef MAGNUM_TARGET_GLES3
         case TextureFormat::DepthComponent32:
-        #endif
             return ColorType::UnsignedInt;
 
         #ifndef MAGNUM_TARGET_GLES2
@@ -761,13 +748,16 @@ void AbstractTexture::storageImplementationFallback(const GLenum target, const G
     /* Cube map additionally needs to specify all faces */
     } else if(target == GL_TEXTURE_CUBE_MAP) {
         for(GLsizei level = 0; level != levels; ++level) {
-            for(GLenum face: {GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-                              GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-                              GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-                              GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-                              GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-                              GL_TEXTURE_CUBE_MAP_NEGATIVE_Z})
-                (this->*image2DImplementation)(face, level, internalFormat, Math::max(Vector2i(1), size >> level), format, type, nullptr);
+            const std::initializer_list<GLenum> faces = {
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+                GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+                GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+                GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+            };
+            for(auto it = faces.begin(); it != faces.end(); ++it)
+                (this->*image2DImplementation)(*it, level, internalFormat, Math::max(Vector2i(1), size >> level), format, type, nullptr);
         }
 
     #ifndef MAGNUM_TARGET_GLES

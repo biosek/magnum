@@ -25,11 +25,9 @@
 #include <sstream>
 #include <TestSuite/Tester.h>
 
+#include "SceneGraph/Object.hpp"
 #include "SceneGraph/TranslationTransformation.h"
 #include "SceneGraph/Scene.h"
-
-/* For Object2Di */
-#include "SceneGraph/Object.hpp"
 
 namespace Magnum { namespace SceneGraph { namespace Test {
 
@@ -54,7 +52,7 @@ class TranslationTransformationTest: public TestSuite::Tester {
 };
 
 TranslationTransformationTest::TranslationTransformationTest() {
-    addTests({&TranslationTransformationTest::fromMatrix,
+    addTests<TranslationTransformationTest>({&TranslationTransformationTest::fromMatrix,
               &TranslationTransformationTest::toMatrix,
               &TranslationTransformationTest::compose,
               &TranslationTransformationTest::inverted,
@@ -138,7 +136,7 @@ void TranslationTransformationTest::integral() {
 
     Object2Di o;
     o.translate({3, -7});
-    CORRADE_COMPARE(o.transformationMatrix(), Matrix3::translation({3, -7}));
+    CORRADE_COMPARE(o.transformationMatrix(), Matrix3::translation({3.0f, -7.0f}));
 }
 
 }}}

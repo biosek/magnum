@@ -39,7 +39,7 @@ namespace Magnum { namespace SceneGraph {
 */
 template<class T> class AbstractBasicTranslationRotationScaling2D: public AbstractBasicTranslationRotation2D<T> {
     public:
-        explicit AbstractBasicTranslationRotationScaling2D() = default;
+        explicit AbstractBasicTranslationRotationScaling2D();
 
         /**
          * @brief Scale object
@@ -71,7 +71,7 @@ template<class T> class AbstractBasicTranslationRotationScaling2D: public Abstra
         #endif
 
     protected:
-        ~AbstractBasicTranslationRotationScaling2D() = default;
+        ~AbstractBasicTranslationRotationScaling2D();
 
     #ifdef DOXYGEN_GENERATING_OUTPUT
     protected:
@@ -81,6 +81,9 @@ template<class T> class AbstractBasicTranslationRotationScaling2D: public Abstra
         /** @brief Polymorphic implementation for scale() */
         virtual void doScale(const Math::Vector2<T>& vector, TransformationType type) = 0;
 };
+
+template<class T> inline AbstractBasicTranslationRotationScaling2D<T>::AbstractBasicTranslationRotationScaling2D() = default;
+template<class T> inline AbstractBasicTranslationRotationScaling2D<T>::~AbstractBasicTranslationRotationScaling2D() = default;
 
 /**
 @brief Base transformation for two-dimensional float scenes supporting translation, rotation and scaling

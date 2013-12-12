@@ -52,7 +52,7 @@ use @ref Object.hpp implementation file to avoid linker errors. See
     @ref AbstractBasicTransformation3D, @ref AbstractTransformation2D,
     @ref AbstractTransformation3D
 */
-template<UnsignedInt dimensions, class T> class MAGNUM_SCENEGRAPH_EXPORT AbstractTransformation {
+template<UnsignedInt dimensions, class T> class AbstractTransformation {
     public:
         /** @brief Underlying floating-point type */
         typedef T Type;
@@ -72,7 +72,7 @@ template<UnsignedInt dimensions, class T> class MAGNUM_SCENEGRAPH_EXPORT Abstrac
         }
 
     protected:
-        ~AbstractTransformation() = default;
+        ~AbstractTransformation();
 
     #ifdef DOXYGEN_GENERATING_OUTPUT
     protected:
@@ -82,6 +82,8 @@ template<UnsignedInt dimensions, class T> class MAGNUM_SCENEGRAPH_EXPORT Abstrac
         /** @brief Polymorphic implementation for resetTransformation() */
         virtual void doResetTransformation() = 0;
 };
+
+template<UnsignedInt dimensions, class T> AbstractTransformation<dimensions, T>::~AbstractTransformation() = default;
 
 /**
 @brief Transformation type
@@ -106,7 +108,9 @@ AbstractTransformation for more information.
     instead.
 @see @ref AbstractTransformation2D, @ref AbstractBasicTransformation3D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using AbstractBasicTransformation2D = AbstractTransformation<2, T>;
+#endif
 #endif
 
 /**
@@ -130,7 +134,9 @@ AbstractTransformation for more information.
     instead.
 @see @ref AbstractTransformation3D, @ref AbstractBasicTransformation2D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using AbstractBasicTransformation3D = AbstractTransformation<3, T>;
+#endif
 #endif
 
 /**
@@ -142,6 +148,11 @@ template<class T> using AbstractBasicTransformation3D = AbstractTransformation<3
 typedef AbstractBasicTransformation3D<Float> AbstractTransformation3D;
 #else
 typedef AbstractTransformation<3, Float> AbstractTransformation3D;
+#endif
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT AbstractTransformation<2, Float>;
+extern template class MAGNUM_SCENEGRAPH_EXPORT AbstractTransformation<3, Float>;
 #endif
 
 }}

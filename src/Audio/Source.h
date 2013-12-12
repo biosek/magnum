@@ -275,7 +275,7 @@ class MAGNUM_AUDIO_EXPORT Source {
          *      with @def_al{CONE_INNER_ANGLE}
          */
         Source& setInnerConeAngle(Deg angle) {
-            alSourcef(_id, AL_CONE_INNER_ANGLE, Float(angle));
+            alSourcef(_id, AL_CONE_INNER_ANGLE, angle.toUnderlyingType());
             return *this;
         }
 
@@ -290,7 +290,7 @@ class MAGNUM_AUDIO_EXPORT Source {
          *      @def_al{CONE_OUTER_ANGLE}
          */
         Source& setOuterConeAngle(Deg angle) {
-            alSourcef(_id, AL_CONE_OUTER_ANGLE, Float(angle));
+            alSourcef(_id, AL_CONE_OUTER_ANGLE, angle.toUnderlyingType());
             return *this;
         }
 
@@ -560,7 +560,7 @@ inline Source& Source::operator=(Source&& other) {
     return *this;
 }
 
-auto Source::state() const -> State {
+inline auto Source::state() const -> State {
     ALint state;
     alGetSourcei(_id, AL_SOURCE_STATE, &state);
     return State(state);

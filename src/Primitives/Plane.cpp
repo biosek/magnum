@@ -31,19 +31,19 @@ namespace Magnum { namespace Primitives {
 
 Trade::MeshData3D Plane::solid(const TextureCoords textureCoords) {
     std::vector<std::vector<Vector2>> coords;
-    if(textureCoords == TextureCoords::Generate) coords.push_back({
+    if(textureCoords == TextureCoords::Generate) coords.push_back(std::vector<Vector2>{
         {1.0f, 0.0f},
         {1.0f, 1.0f},
         {0.0f, 0.0f},
         {0.0f, 1.0f}
     });
 
-    return Trade::MeshData3D(Mesh::Primitive::TriangleStrip, {}, {{
+    return Trade::MeshData3D(Mesh::Primitive::TriangleStrip, std::vector<UnsignedInt>{}, {std::vector<Vector3>{
         {1.0f, -1.0f, 0.0f},
         {1.0f, 1.0f, 0.0f},
         {-1.0f, -1.0f, 0.0f},
         {-1.0f, 1.0f, 0.0f}
-    }}, {{
+    }}, {std::vector<Vector3>{
         {0.0f, 0.0f, 1.0f},
         {0.0f, 0.0f, 1.0f},
         {0.0f, 0.0f, 1.0f},
@@ -52,12 +52,13 @@ Trade::MeshData3D Plane::solid(const TextureCoords textureCoords) {
 }
 
 Trade::MeshData3D Plane::wireframe() {
-    return Trade::MeshData3D(Mesh::Primitive::LineLoop, {}, {{
+    /* {} initializers are causing ICE in MSVC 2013. Bhaha. */
+    return Trade::MeshData3D(Mesh::Primitive::LineLoop, std::vector<UnsignedInt>(), {std::vector<Vector3>{
         {-1.0f, -1.0f, 0.0f},
         {1.0f, -1.0f, 0.0f},
         {1.0f, 1.0f, 0.0f},
         {-1.0f, 1.0f, 0.0f}
-    }}, {}, {});
+    }}, std::vector<std::vector<Vector3>>(), std::vector<std::vector<Vector2>>());
 }
 
 }}

@@ -92,7 +92,7 @@ template<class T> class Complex {
          * @see angle(), Matrix3::rotation(), Quaternion::rotation()
          */
         static Complex<T> rotation(Rad<T> angle) {
-            return {std::cos(T(angle)), std::sin(T(angle))};
+            return {std::cos(angle.toUnderlyingType()), std::sin(angle.toUnderlyingType())};
         }
 
         /**
@@ -171,7 +171,11 @@ template<class T> class Complex {
          *      \boldsymbol v = \begin{pmatrix} a \\ b \end{pmatrix}
          * @f]
          */
+        #ifndef CORRADE_GCC44_COMPATIBILITY
         constexpr explicit operator Vector2<T>() const {
+        #else
+        constexpr operator Vector2<T>() const {
+        #endif
             return {_real, _imaginary};
         }
 

@@ -25,9 +25,10 @@
 #include "MagnumFont.h"
 
 #include <sstream>
-#include "Containers/Array.h"
-#include "Utility/Directory.h"
-#include "Utility/Unicode.h"
+#include <Containers/Array.h>
+#include <Utility/Directory.h>
+#include <Utility/Unicode.h>
+
 #include "Text/GlyphCache.h"
 #include "Trade/ImageData.h"
 
@@ -52,7 +53,7 @@ namespace {
             explicit MagnumFontLayouter(const std::vector<Vector2>& glyphAdvance, const GlyphCache& cache, Float fontSize, Float textSize, std::vector<UnsignedInt>&& glyphs);
 
         private:
-            std::tuple<Rectangle, Rectangle, Vector2> doRenderGlyph(UnsignedInt i) override;
+            std::tuple<Range2D, Range2D, Vector2> doRenderGlyph(UnsignedInt i) override;
 
             const std::vector<Vector2>& glyphAdvance;
             const GlyphCache& cache;
@@ -79,7 +80,7 @@ std::pair<Float, Float> MagnumFont::doOpenData(const std::vector<std::pair<std::
     }
 
     /* Open the configuration file */
-    std::istringstream in({reinterpret_cast<const char*>(data[0].second.begin()), data[0].second.size()});
+    std::istringstream in(std::string(reinterpret_cast<const char*>(data[0].second.begin()), data[0].second.size()));
     Utility::Configuration conf(in, Utility::Configuration::Flag::SkipComments);
     if(!conf.isValid() || conf.isEmpty()) {
         Error() << "Text::MagnumFont::openData(): cannot open file" << data[0].first;
@@ -148,17 +149,18 @@ std::pair<Float, Float> MagnumFont::doOpenFile(const std::string& filename, Floa
 
 std::pair<Float, Float> MagnumFont::openInternal(Utility::Configuration&& conf, Trade::ImageData2D&& image) {
     /* Everything okay, save the data internally */
-    _opened = new Data{std::move(conf), std::move(image), {}, {}};
+    _opened = new Data{std::move(conf), std::move(image), std::unordered_map<char32_t, UnsignedInt>{}, std::vector<Vector2>{}};
 
     /* Glyph advances */
     const std::vector<Utility::ConfigurationGroup*> glyphs = _opened->conf.groups("glyph");
     _opened->glyphAdvance.reserve(glyphs.size());
-    for(const Utility::ConfigurationGroup* const g: glyphs)
-        _opened->glyphAdvance.push_back(g->value<Vector2>("advance"));
+    for(auto it = glyphs.begin(); it != glyphs.end(); ++it)
+        _opened->glyphAdvance.push_back((*it)->value<Vector2>("advance"));
 
     /* Fill character->glyph map */
     const std::vector<Utility::ConfigurationGroup*> chars = _opened->conf.groups("char");
-    for(const Utility::ConfigurationGroup* const c: chars) {
+    for(auto it = chars.begin(); it != chars.end(); ++it) {
+        const Utility::ConfigurationGroup* const c = *it;
         const UnsignedInt glyphId = c->value<UnsignedInt>("glyph");
         CORRADE_INTERNAL_ASSERT(glyphId < _opened->glyphAdvance.size());
         #ifndef CORRADE_GCC46_COMPATIBILITY
@@ -168,7 +170,8 @@ std::pair<Float, Float> MagnumFont::openInternal(Utility::Configuration&& conf, 
         #endif
     }
 
-    return {_opened->conf.value<Float>("fontSize"), _opened->conf.value<Float>("lineHeight")};
+    /* {} initializers are causing ICE in MSVC 2013. Bhaha. */
+    return std::make_pair(_opened->conf.value<Float>("fontSize"), _opened->conf.value<Float>("lineHeight"));
 }
 
 void MagnumFont::doClose() {
@@ -196,7 +199,7 @@ std::unique_ptr<GlyphCache> MagnumFont::doCreateGlyphCache() {
     /* Fill glyph map */
     const std::vector<Utility::ConfigurationGroup*> glyphs = _opened->conf.groups("glyph");
     for(std::size_t i = 0; i != glyphs.size(); ++i)
-        cache->insert(i, glyphs[i]->value<Vector2i>("position"), glyphs[i]->value<Rectanglei>("rectangle"));
+        cache->insert(i, glyphs[i]->value<Vector2i>("position"), glyphs[i]->value<Range2Di>("rectangle"));
 
     return cache;
 }
@@ -219,27 +222,23 @@ namespace {
 
 MagnumFontLayouter::MagnumFontLayouter(const std::vector<Vector2>& glyphAdvance, const GlyphCache& cache, const Float fontSize, const Float textSize, std::vector<UnsignedInt>&& glyphs): AbstractLayouter(glyphs.size()), glyphAdvance(glyphAdvance), cache(cache), fontSize(fontSize), textSize(textSize), glyphs(std::move(glyphs)) {}
 
-std::tuple<Rectangle, Rectangle, Vector2> MagnumFontLayouter::doRenderGlyph(const UnsignedInt i) {
+std::tuple<Range2D, Range2D, Vector2> MagnumFontLayouter::doRenderGlyph(const UnsignedInt i) {
     /* Position of the texture in the resulting glyph, texture coordinates */
     Vector2i position;
-    Rectanglei rectangle;
+    Range2Di rectangle;
     std::tie(position, rectangle) = cache[glyphs[i]];
 
-    const Rectangle texturePosition = Rectangle::fromSize(Vector2(position)/fontSize,
-                                                          Vector2(rectangle.size())/fontSize);
-    const Rectangle textureCoordinates(Vector2(rectangle.bottomLeft())/Vector2(cache.textureSize()),
-                                       Vector2(rectangle.topRight())/Vector2(cache.textureSize()));
+    /* Normalized texture coordinates */
+    const auto textureCoordinates = Range2D(rectangle).scaled(1.0f/Vector2(cache.textureSize()));
 
-    /* Absolute quad position, composed from cursor position, glyph offset
-       and texture position, denormalized to requested text size */
-    Rectangle quadPosition = Rectangle::fromSize(
-        Vector2(texturePosition.left(), texturePosition.bottom())*textSize,
-        texturePosition.size()*textSize);
+    /* Quad rectangle, computed from texture rectangle, denormalized to
+       requested text size */
+    const auto quadRectangle = Range2D(Range2Di::fromSize(position, rectangle.size())).scaled(Vector2(textSize/fontSize));
 
     /* Advance for given glyph, denormalized to requested text size */
-    const Vector2 advance = glyphAdvance[glyphs[i]]*textSize/fontSize;
+    const Vector2 advance = glyphAdvance[glyphs[i]]*(textSize/fontSize);
 
-    return std::make_tuple(quadPosition, textureCoordinates, advance);
+    return std::make_tuple(quadRectangle, textureCoordinates, advance);
 }
 
 }

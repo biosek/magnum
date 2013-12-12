@@ -43,7 +43,7 @@ class UnitTest: public Corrade::TestSuite::Tester {
 };
 
 UnitTest::UnitTest() {
-    addTests({&UnitTest::construct,
+    addTests<UnitTest>({&UnitTest::construct,
               &UnitTest::constructDefault,
               &UnitTest::constructConversion,
               &UnitTest::compare,
@@ -58,12 +58,12 @@ typedef Unit<Sec_, Float> Sec;
 typedef Unit<Sec_, Int> Seci;
 
 inline Corrade::Utility::Debug operator<<(Corrade::Utility::Debug debug, Sec value) {
-    return debug << Float(value);
+    return debug << value.toUnderlyingType();
 }
 
 void UnitTest::construct() {
     constexpr Sec a(25.0f);
-    CORRADE_COMPARE(Float(a), 25.0f);
+    CORRADE_COMPARE(a.toUnderlyingType(), 25.0f);
 
     /* Implicit conversion is not allowed */
     CORRADE_VERIFY(!(std::is_convertible<Float, Sec>::value));
@@ -76,7 +76,7 @@ void UnitTest::constructDefault() {
 }
 
 void UnitTest::constructConversion() {
-    constexpr Seci a(25.0);
+    constexpr Seci a(25);
     constexpr Sec b(a);
     CORRADE_COMPARE(b, Sec(25.0f));
 

@@ -143,7 +143,6 @@ void BufferGLTest::data() {
     #endif
 }
 
-#ifndef MAGNUM_TARGET_GLES3
 void BufferGLTest::map() {
     #ifdef MAGNUM_TARGET_GLES2
     if(!Context::current()->isExtensionSupported<Extensions::GL::OES::mapbuffer>())
@@ -177,7 +176,6 @@ void BufferGLTest::map() {
     CORRADE_COMPARE(changedContents[3], 107);
     #endif
 }
-#endif
 
 #ifdef MAGNUM_TARGET_GLES2
 void BufferGLTest::mapSub() {
@@ -187,7 +185,7 @@ void BufferGLTest::mapSub() {
     Buffer buffer;
 
     constexpr char data[] = {2, 7, 5, 13, 25};
-    buffer.setData(data, Buffer::Usage::StaticDraw);
+    buffer.setData(data, BufferUsage::StaticDraw);
 
     char* contents = reinterpret_cast<char*>(buffer.mapSub(1, 4, Buffer::MapAccess::WriteOnly));
     MAGNUM_VERIFY_NO_ERROR();

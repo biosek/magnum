@@ -21,7 +21,20 @@
 # define REQUIRES(...) typename enable_if<__VA_ARGS__::value, bool>::type = false
 
 # if defined __clang__
-#  define OPTIONAL_HAS_USING 1
+#  if (__clang_major__ > 3) || (__clang_major__ == 3) && (__clang_minor__ >= 1)
+#   define OPTIONAL_HAS_CONSTEXPR_NOEXCEPT 1
+#  else
+#   define OPTIONAL_HAS_CONSTEXPR_NOEXCEPT 0
+#  endif
+#  if (__clang_major__ >= 3)
+#   define OPTIONAL_HAS_USING 1
+#   define OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS 1
+#   define OPTIONAL_HAS_UNRESTRICTED_UNIONS 1
+#  else
+#   define OPTIONAL_HAS_USING 0
+#   define OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS 0
+#   define OPTIONAL_HAS_UNRESTRICTED_UNIONS 0
+#  endif
 #  if (__clang_major__ > 2) || (__clang_major__ == 2) && (__clang_minor__ >= 9)
 #   define OPTIONAL_HAS_THIS_RVALUE_REFS 1
 #  else
@@ -38,9 +51,30 @@
 #  else
 #   define OPTIONAL_HAS_THIS_RVALUE_REFS 0
 #  endif
+#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))
+#   define OPTIONAL_HAS_CONSTEXPR_NOEXCEPT 1
+#   define OPTIONAL_HAS_UNRESTRICTED_UNIONS 1
+#  else
+#   define OPTIONAL_HAS_CONSTEXPR_NOEXCEPT 0
+#   define OPTIONAL_HAS_UNRESTRICTED_UNIONS 0
+#  endif
+#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 5))
+#   define OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS 1
+#  else
+#   define OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS 0
+#  endif
+# elif defined(_MSC_VER) && _MSC_VER >= 1800
+#  define OPTIONAL_HAS_THIS_RVALUE_REFS 0
+#  define OPTIONAL_HAS_USING 1
+#  define OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS 1
+#  define OPTIONAL_HAS_CONSTEXPR_NOEXCEPT 0
+#  define OPTIONAL_HAS_UNRESTRICTED_UNIONS 0
 # else
 #  define OPTIONAL_HAS_THIS_RVALUE_REFS 0
 #  define OPTIONAL_HAS_USING 0
+#  define OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS 0
+#  define OPTIONAL_HAS_CONSTEXPR_NOEXCEPT 0
+#  define OPTIONAL_HAS_UNRESTRICTED_UNIONS 0
 # endif
 
 
@@ -50,6 +84,8 @@ namespace std{
 # if (defined __GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8)))
     // leave it; our metafunctions are already defined.
 # elif (defined __clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3) && (__clang_minor__ >= 3))
+    // leave it; our metafunctions are already defined.
+# elif (defined _MSC_VER) && _MSC_VER >= 1800
     // leave it; our metafunctions are already defined.
 # else
 
@@ -66,6 +102,7 @@ using is_trivially_destructible = typename std::has_trivial_destructor<T>;
 #  else
 
 
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
 // workaround for missing traits in GCC and CLANG
 template <class T>
 struct is_nothrow_move_constructible
@@ -103,7 +140,17 @@ struct is_nothrow_move_assignable
   constexpr static bool value = has_nothrow_move_assign<T, is_assignable<T&, T&&>::value>::value;
 };
 // end workaround
+#endif
 
+#   if (defined __GNUC__) && ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 5)))
+      // leave it; remaining metafunctions are already defined.
+#   else
+template<class, class>
+struct is_constructible
+{
+    static const bool value = true; // fugly hack
+};
+#   endif // not as good as GCC 4.4
 
 #  endif // not as good as GCC 4.7
 # endif // not as good as GCC 4.8
@@ -147,6 +194,8 @@ template <class T> inline constexpr typename std::remove_reference<T>::type&& co
     __assert(expr, file, line);
   # elif defined __GNUC__
     _assert(expr, file, line);
+  # elif defined _MSC_VER
+    _CrtDbgReport(_CRT_ASSERT, file, line, expr, "");
   # else
   #   error UNSUPPORTED COMPILER
   # endif
@@ -154,6 +203,7 @@ template <class T> inline constexpr typename std::remove_reference<T>::type&& co
 #endif
 
 
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
 template <typename T>
 struct has_overloaded_addressof
 {
@@ -179,27 +229,63 @@ T* static_addressof(T& ref)
 {
   return std::addressof(ref);
 }
+#else
+# if (defined _MSC_VER) && _MSC_VER >= 1800
+    // leave it; our metafunctions are already defined.
+# else
+template <typename T>
+T* addressof(T& ref)
+{
+  return reinterpret_cast<T*>(&const_cast<char&>(reinterpret_cast<const volatile char&>(ref)));
+}
+#endif
+template <typename T>
+T* static_addressof(T& ref)
+{
+  return addressof(ref);
+}
+#endif
 
 
 
 template <class U>
 struct is_not_optional
 {
-  constexpr static bool value = true;
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+  constexpr
+  #else
+  const
+  #endif
+  static bool value = true;
 };
 
 template <class T>
 struct is_not_optional<optional<T>>
 {
-  constexpr static bool value = false;
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+  constexpr
+  #else
+  const
+  #endif
+  static bool value = false;
 };
 
 
-constexpr struct trivial_init_t{} trivial_init{};
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+constexpr
+#else
+const
+#endif
+struct trivial_init_t{} trivial_init{};
 
 
 // 20.5.6, In-place construction
-constexpr struct in_place_t{} in_place{};
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+constexpr
+#else
+const
+#endif
+struct in_place_t{} in_place{};
 
 
 // 20.5.7, Disengaged state indicator
@@ -208,7 +294,12 @@ struct nullopt_t
   struct init{};
   constexpr nullopt_t(init){};
 };
-constexpr nullopt_t nullopt{nullopt_t::init{}};
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+constexpr
+#else
+const
+#endif
+nullopt_t nullopt{nullopt_t::init{}};
 
 
 // 20.5.8, class bad_optional_access
@@ -219,6 +310,7 @@ public:
 };
 
 
+#if OPTIONAL_HAS_UNRESTRICTED_UNIONS
 template <class T>
 union storage_t
 {
@@ -247,9 +339,30 @@ union constexpr_storage_t
 
     ~constexpr_storage_t() = default;
 };
+#else
+template <class T>
+struct storage_t
+{
+  unsigned char storage_[sizeof(T)];
+  T& value_() { return *reinterpret_cast<T*>(storage_); }
+  const T& value_() const { return *reinterpret_cast<const T*>(storage_); }
 
+  storage_t( trivial_init_t ): storage_() {}
 
-constexpr struct only_set_initialized_t{} only_set_initialized{};
+  template <class... Args> storage_t( Args&&... args ) {
+    new(storage_) T(forward<Args>(args)...);
+  }
+
+  ~storage_t(){}
+};
+#endif
+
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+constexpr
+#else
+const
+#endif
+struct only_set_initialized_t{} only_set_initialized{};
 
 
 template <class T>
@@ -269,14 +382,23 @@ struct optional_base
     template <class... Args> explicit optional_base(in_place_t, Args&&... args)
         : init_(true), storage_(constexpr_forward<Args>(args)...) {}
 
-    template <class U, class... Args, REQUIRES(is_constructible<T, std::initializer_list<U>>)>
+    template <class U, class... Args
+      , REQUIRES(is_constructible<T, std::initializer_list<U>>)
+      >
     explicit optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
         : init_(true), storage_(il, std::forward<Args>(args)...) {}
 
-    ~optional_base() { if (init_) storage_.value_.T::~T(); }
+    ~optional_base() {
+      #if OPTIONAL_HAS_UNRESTRICTED_UNIONS
+      if (init_) storage_.value_.T::~T();
+      #else
+      if (init_) storage_.value_().T::~T();
+      #endif
+    }
 };
 
 
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
 template <class T>
 struct constexpr_optional_base
 {
@@ -300,8 +422,9 @@ struct constexpr_optional_base
 
     ~constexpr_optional_base() = default;
 };
+#endif
 
-# if OPTIONAL_HAS_USING
+# if OPTIONAL_HAS_USING && OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
 template <class T>
 using OptionalBase = typename std::conditional<
     std::is_trivially_destructible<T>::value,
@@ -320,16 +443,40 @@ class optional : private OptionalBase<T>
 
 
   constexpr bool initialized() const noexcept { return OptionalBase<T>::init_; }
-  T* dataptr() {  return std::addressof(OptionalBase<T>::storage_.value_); }
-  constexpr const T* dataptr() const { return static_addressof(OptionalBase<T>::storage_.value_); }
+  T* dataptr() {
+    #if OPTIONAL_HAS_UNRESTRICTED_UNIONS
+    return std::addressof(OptionalBase<T>::storage_.value_);
+    #else
+    return std::addressof(OptionalBase<T>::storage_.value_());
+    #endif
+  }
+  constexpr const T* dataptr() const {
+    #if OPTIONAL_HAS_UNRESTRICTED_UNIONS
+    return static_addressof(OptionalBase<T>::storage_.value_);
+    #else
+    return static_addressof(OptionalBase<T>::storage_.value_());
+    #endif
+  }
 
 # if OPTIONAL_HAS_THIS_RVALUE_REFS == 1
   constexpr const T& contained_val() const& { return OptionalBase<T>::storage_.value_; }
   T& contained_val() & { return OptionalBase<T>::storage_.value_; }
   T&& contained_val() && { return std::move(OptionalBase<T>::storage_.value_); }
 # else
-  constexpr const T& contained_val() const { return OptionalBase<T>::storage_.value_; }
-  T& contained_val() { return OptionalBase<T>::storage_.value_; }
+  constexpr const T& contained_val() const {
+    #if OPTIONAL_HAS_UNRESTRICTED_UNIONS
+    return OptionalBase<T>::storage_.value_;
+    #else
+    return OptionalBase<T>::storage_.value_();
+    #endif
+  }
+  T& contained_val() {
+    #if OPTIONAL_HAS_UNRESTRICTED_UNIONS
+    return OptionalBase<T>::storage_.value_;
+    #else
+    return OptionalBase<T>::storage_.value_();
+    #endif
+  }
 # endif
 
   void clear() noexcept {
@@ -338,7 +485,10 @@ class optional : private OptionalBase<T>
   }
 
   template <class... Args>
-  void initialize(Args&&... args) noexcept(noexcept(T(std::forward<Args>(args)...)))
+  void initialize(Args&&... args)
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+  noexcept(noexcept(T(std::forward<Args>(args)...)))
+  #endif
   {
     assert(!OptionalBase<T>::init_);
     new (dataptr()) T(std::forward<Args>(args)...);
@@ -346,7 +496,10 @@ class optional : private OptionalBase<T>
   }
 
   template <class U, class... Args>
-  void initialize(std::initializer_list<U> il, Args&&... args) noexcept(noexcept(T(il, std::forward<Args>(args)...)))
+  void initialize(std::initializer_list<U> il, Args&&... args)
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+  noexcept(noexcept(T(il, std::forward<Args>(args)...)))
+  #endif
   {
     assert(!OptionalBase<T>::init_);
     new (dataptr()) T(il, std::forward<Args>(args)...);
@@ -366,7 +519,10 @@ public:
     if (rhs.initialized()) new (dataptr()) T(*rhs);
   }
 
-  optional(optional&& rhs) noexcept(std::is_nothrow_move_constructible<T>::value)
+  optional(optional&& rhs)
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+  noexcept(std::is_nothrow_move_constructible<T>::value)
+  #endif
   : OptionalBase<T>(only_set_initialized, rhs.initialized())
   {
     if (rhs.initialized()) new (dataptr()) T(std::move(*rhs));
@@ -380,7 +536,9 @@ public:
     constexpr explicit optional(in_place_t, Args&&... args)
         : OptionalBase<T>(in_place_t{}, constexpr_forward<Args>(args)...) {}
 
-    template <class U, class... Args, REQUIRES(is_constructible<T, std::initializer_list<U>>)>
+    template <class U, class... Args
+      , REQUIRES(is_constructible<T, std::initializer_list<U>>)
+      >
     explicit optional(in_place_t, std::initializer_list<U> il, Args&&... args)
         : OptionalBase<T>(in_place_t{}, il, constexpr_forward<Args>(args)...) {}
 
@@ -403,7 +561,9 @@ public:
   }
 
   optional& operator=(optional&& rhs)
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
   noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_move_constructible<T>::value)
+  #endif
   {
     if      (initialized() == true  && rhs.initialized() == false) clear();
     else if (initialized() == false && rhs.initialized() == true)  initialize(std::move(*rhs));
@@ -440,7 +600,10 @@ public:
   }
 
   // 20.5.4.4 Swap
-  void swap(optional<T>& rhs) noexcept(is_nothrow_move_constructible<T>::value && noexcept(swap(declval<T&>(), declval<T&>())))
+  void swap(optional<T>& rhs)
+  #if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+  noexcept(is_nothrow_move_constructible<T>::value && noexcept(swap(declval<T&>(), declval<T&>())))
+  #endif
   {
     if      (initialized() == true  && rhs.initialized() == false) { rhs.initialize(std::move(**this)); clear(); }
     else if (initialized() == false && rhs.initialized() == true)  { initialize(std::move(*rhs)); rhs.clear(); }
@@ -474,7 +637,11 @@ public:
     return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
   }
 
-  constexpr explicit operator bool() const noexcept { return initialized(); }
+  constexpr
+  #if OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS
+  explicit
+  #endif
+  operator bool() const noexcept { return initialized(); }
 
 # if OPTIONAL_HAS_THIS_RVALUE_REFS == 1
 
@@ -591,7 +758,10 @@ public:
     return ref ? *ref : (throw bad_optional_access("bad optional access"), *ref);
   }
 
-  explicit constexpr operator bool() const noexcept {
+  #if OPTIONAL_HAS_EXPLICIT_CONVERSION_OPS
+  explicit
+  #endif
+  constexpr operator bool() const noexcept {
     return ref != nullptr;
   }
 
@@ -892,7 +1062,10 @@ template <class T> constexpr bool operator>=(const T& v, const optional<const T&
 
 // 20.5.12 Specialized algorithms
 template <class T>
-void swap(optional<T>& x, optional<T>& y) noexcept(noexcept(x.swap(y)))
+void swap(optional<T>& x, optional<T>& y)
+#if OPTIONAL_HAS_CONSTEXPR_NOEXCEPT
+noexcept(noexcept(x.swap(y)))
+#endif
 {
   x.swap(y);
 }

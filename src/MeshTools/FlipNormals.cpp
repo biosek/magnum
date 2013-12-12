@@ -36,8 +36,8 @@ void flipFaceWinding(std::vector<UnsignedInt>& indices) {
 }
 
 void flipNormals(std::vector<Vector3>& normals) {
-    for(Vector3& normal: normals)
-        normal = -normal;
+    for(auto it = normals.begin(); it != normals.end(); ++it)
+        *it = -*it;
 }
 
 }}

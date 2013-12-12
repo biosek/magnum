@@ -216,7 +216,7 @@ layout(binding = 1) uniform sampler2D specularTexture;
 
 If you don't have the required extension (or if you want to change the layer
 later), declare the uniforms without the `layout()` qualifier and set the
-texture layer uniform using @ref setUniform(Int, const T&) "setUniform(Int, Int)".
+texture layer uniform using @ref Magnum::AbstractShaderProgram::setUniform(Int, const T&) "setUniform(Int, Int)".
 Note that additional syntax changes may be needed for GLSL 1.20 and GLSL ES
 1.0.
 @code
@@ -230,9 +230,11 @@ setUniform(SpecularTextureUniform, SpecularTextureLayer);
 
 @see @ref Shader::maxTextureImageUnits()
 @requires_gl42 %Extension @extension{ARB,shading_language_420pack} for explicit
-    texture layer binding instead of using @ref setUniform(Int, const T&) "setUniform(Int, Int)".
+    texture layer binding instead of using
+    @ref Magnum::AbstractShaderProgram::setUniform(Int, const T&) "setUniform(Int, Int)".
 @requires_gl Explicit texture layer binding is not supported in OpenGL ES. Use
-    @ref setUniform(Int, const T&) "setUniform(Int, Int)" instead.
+    @ref Magnum::AbstractShaderProgram::setUniform(Int, const T&) "setUniform(Int, Int)"
+    instead.
 
 @section AbstractShaderProgram-rendering-workflow Rendering workflow
 
@@ -1319,9 +1321,9 @@ template<UnsignedInt location, class T> class AbstractShaderProgram::Attribute {
         constexpr DataOptions dataOptions() const { return _dataOptions; }
 
     private:
-        const Components _components;
-        const DataType _dataType;
-        const DataOptions _dataOptions;
+        Components _components;
+        DataType _dataType;
+        DataOptions _dataOptions;
 };
 
 #ifdef DOXYGEN_GENERATING_OUTPUT
@@ -1343,19 +1345,39 @@ template<std::size_t cols> struct SizedVectorAttribute {
 };
 template<> struct SizedAttribute<1, 1>: SizedVectorAttribute<1> {
     enum class Components: GLint { One = 1 };
-    constexpr static Components DefaultComponents = Components::One;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::One;
 };
 template<> struct SizedAttribute<1, 2>: SizedVectorAttribute<1> {
     enum class Components: GLint { One = 1, Two = 2 };
-    constexpr static Components DefaultComponents = Components::Two;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Two;
 };
 template<> struct SizedAttribute<1, 3>: SizedVectorAttribute<1> {
     enum class Components: GLint { One = 1, Two = 2, Three = 3 };
-    constexpr static Components DefaultComponents = Components::Three;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Three;
 };
 template<> struct SizedAttribute<1, 4>: SizedVectorAttribute<1> {
     enum class Components: GLint { One = 1, Two = 2, Three = 3, Four = 4 };
-    constexpr static Components DefaultComponents = Components::Four;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Four;
 };
 Debug MAGNUM_EXPORT operator<<(Debug debug, SizedAttribute<1, 1>::Components value);
 Debug MAGNUM_EXPORT operator<<(Debug debug, SizedAttribute<1, 2>::Components value);
@@ -1366,15 +1388,30 @@ Debug MAGNUM_EXPORT operator<<(Debug debug, SizedAttribute<1, 4>::Components val
 template<std::size_t rows> struct SizedMatrixAttribute;
 template<> struct SizedMatrixAttribute<2> {
     enum class Components: GLint { Two   = 2 };
-    constexpr static Components DefaultComponents = Components::Two;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Two;
 };
 template<> struct SizedMatrixAttribute<3> {
     enum class Components: GLint { Three = 3 };
-    constexpr static Components DefaultComponents = Components::Three;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Three;
 };
 template<> struct SizedMatrixAttribute<4> {
     enum class Components: GLint { Four  = 4 };
-    constexpr static Components DefaultComponents = Components::Four;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Four;
 };
 Debug MAGNUM_EXPORT operator<<(Debug debug, SizedMatrixAttribute<2>::Components value);
 Debug MAGNUM_EXPORT operator<<(Debug debug, SizedMatrixAttribute<3>::Components value);
@@ -1417,7 +1454,12 @@ struct FloatAttribute {
         Double = GL_DOUBLE
         #endif
     };
-    constexpr static DataType DefaultDataType = DataType::Float;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    DataType DefaultDataType = DataType::Float;
 
     enum class DataOption: UnsignedByte {
         Normalized = 1 << 0
@@ -1444,7 +1486,12 @@ struct IntAttribute {
         UnsignedInt = GL_UNSIGNED_INT,
         Int = GL_INT
     };
-    constexpr static DataType DefaultDataType = DataType::Int;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    DataType DefaultDataType = DataType::Int;
 
     enum class DataOption: UnsignedByte {};
     typedef Containers::EnumSet<DataOption, UnsignedByte> DataOptions;
@@ -1459,7 +1506,12 @@ struct UnsignedIntAttribute {
     typedef UnsignedInt Type;
 
     typedef IntAttribute::DataType DataType;
-    constexpr static DataType DefaultDataType = DataType::UnsignedInt;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    DataType DefaultDataType = DataType::UnsignedInt;
 
     typedef IntAttribute::DataOption DataOption;
     typedef Containers::EnumSet<DataOption, UnsignedByte> DataOptions;
@@ -1478,7 +1530,12 @@ struct DoubleAttribute {
     enum class DataType: GLenum {
         Double = GL_DOUBLE
     };
-    constexpr static DataType DefaultDataType = DataType::Double;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    DataType DefaultDataType = DataType::Double;
 
     enum class DataOption: UnsignedByte {};
     typedef Containers::EnumSet<DataOption, UnsignedByte> DataOptions;
@@ -1503,7 +1560,12 @@ template<> struct Attribute<Math::Vector<4, Float>> {
         BGRA = GL_BGRA
         #endif
     };
-    constexpr static Components DefaultComponents = Components::Four;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    Components DefaultComponents = Components::Four;
 
     enum class DataType: GLenum {
         UnsignedByte = GL_UNSIGNED_BYTE,
@@ -1528,7 +1590,12 @@ template<> struct Attribute<Math::Vector<4, Float>> {
         Int2101010Rev = GL_INT_2_10_10_10_REV
         #endif
     };
-    constexpr static DataType DefaultDataType = DataType::Float;
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr static
+    #else
+    static const
+    #endif
+    DataType DefaultDataType = DataType::Float;
 
     enum class DataOption: UnsignedByte {
         Normalized = 1 << 0

@@ -139,7 +139,11 @@ class AbstractXApplication {
         explicit AbstractXApplication(Implementation::AbstractContextHandler<Display*, VisualID, Window>* contextHandler, const Arguments& arguments, const Configuration& configuration);
         explicit AbstractXApplication(Implementation::AbstractContextHandler<Display*, VisualID, Window>* contextHandler, const Arguments& arguments);
 
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         explicit AbstractXApplication(Implementation::AbstractContextHandler<Display*, VisualID, Window>* contextHandler, const Arguments& arguments, std::nullptr_t);
+        #else
+        explicit AbstractXApplication(Implementation::AbstractContextHandler<Display*, VisualID, Window>* contextHandler, const Arguments& arguments, void*);
+        #endif
 
     private:
         enum class Flag: unsigned int {
@@ -312,13 +316,21 @@ class AbstractXApplication::InputEvent {
     protected:
         constexpr InputEvent(Modifiers modifiers): _modifiers(modifiers), _accepted(false) {}
 
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         ~InputEvent() = default;
+        #else
+        ~InputEvent();
+        #endif
     #endif
 
     private:
         Modifiers _modifiers;
         bool _accepted;
 };
+
+#ifdef CORRADE_GCC45_COMPATIBILITY
+AbstractXApplication::InputEvent::~InputEvent() = default;
+#endif
 
 CORRADE_ENUMSET_OPERATORS(AbstractXApplication::InputEvent::Modifiers)
 CORRADE_ENUMSET_OPERATORS(AbstractXApplication::InputEvent::Buttons)

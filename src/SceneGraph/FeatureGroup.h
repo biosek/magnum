@@ -41,7 +41,7 @@ namespace Magnum { namespace SceneGraph {
 
 See @ref FeatureGroup.
 */
-template<UnsignedInt dimensions, class T> class MAGNUM_SCENEGRAPH_EXPORT AbstractFeatureGroup {
+template<UnsignedInt dimensions, class T> class AbstractFeatureGroup {
     template<UnsignedInt, class, class> friend class FeatureGroup;
 
     explicit AbstractFeatureGroup();
@@ -64,7 +64,7 @@ template<UnsignedInt dimensions, class Feature, class T> class FeatureGroup: pub
     friend class AbstractGroupedFeature<dimensions, Feature, T>;
 
     public:
-        explicit FeatureGroup() = default;
+        explicit FeatureGroup();
 
         /**
          * @brief Destructor
@@ -112,6 +112,8 @@ template<UnsignedInt dimensions, class Feature, class T> class FeatureGroup: pub
         FeatureGroup<dimensions, Feature, T>& remove(Feature& feature);
 };
 
+template<UnsignedInt dimensions, class Feature, class T> inline FeatureGroup<dimensions, Feature, T>::FeatureGroup() = default;
+
 #ifndef CORRADE_GCC46_COMPATIBILITY
 /**
 @brief Base feature group for two-dimensional scenes
@@ -122,7 +124,9 @@ AbstractGroupedFeature for more information.
     instead.
 @see @ref FeatureGroup2D, @ref BasicFeatureGroup3D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class Feature, class T> using BasicFeatureGroup2D = FeatureGroup<2, Feature, T>;
+#endif
 
 /**
 @brief Base feature group for two-dimensional float scenes
@@ -133,7 +137,9 @@ AbstractGroupedFeature for more information.
     instead.
 @see @ref FeatureGroup3D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class Feature> using FeatureGroup2D = BasicFeatureGroup2D<Feature, Float>;
+#endif
 
 /**
 @brief Base feature group for three-dimensional scenes
@@ -144,7 +150,9 @@ AbstractGroupedFeature for more information.
     instead.
 @see @ref FeatureGroup3D, @ref BasicFeatureGroup2D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class Feature, class T> using BasicFeatureGroup3D = FeatureGroup<3, Feature, T>;
+#endif
 
 /**
 @brief Base feature group for three-dimensional float scenes
@@ -155,11 +163,14 @@ AbstractGroupedFeature for more information.
     instead.
 @see @ref FeatureGroup2D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class Feature> using FeatureGroup3D = BasicFeatureGroup3D<Feature, Float>;
+#endif
 #endif
 
 template<UnsignedInt dimensions, class Feature, class T> FeatureGroup<dimensions, Feature, T>::~FeatureGroup() {
-    for(auto i: AbstractFeatureGroup<dimensions, T>::features) static_cast<Feature*>(i)->_group = nullptr;
+    for(auto it = this->features.begin(); it != this->features.end(); ++it)
+        static_cast<Feature*>(*it)->_group = nullptr;
 }
 
 template<UnsignedInt dimensions, class Feature, class T> FeatureGroup<dimensions, Feature, T>& FeatureGroup<dimensions, Feature, T>::add(Feature& feature) {
@@ -181,6 +192,11 @@ template<UnsignedInt dimensions, class Feature, class T> FeatureGroup<dimensions
     feature._group = nullptr;
     return *this;
 }
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT AbstractFeatureGroup<2, Float>;
+extern template class MAGNUM_SCENEGRAPH_EXPORT AbstractFeatureGroup<3, Float>;
+#endif
 
 }}
 

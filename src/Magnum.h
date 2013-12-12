@@ -45,7 +45,7 @@ namespace Math {
 
     /** @todoc Remove `ifndef` when Doxygen is able to handle operator"" */
     #ifndef DOXYGEN_GENERATING_OUTPUT
-    #ifndef CORRADE_GCC46_COMPATIBILITY
+    #if !defined(CORRADE_GCC46_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
     #ifndef MAGNUM_TARGET_GLES
     constexpr Rad<Double> operator "" _rad(long double);
     constexpr Deg<Double> operator "" _deg(long double);
@@ -301,11 +301,45 @@ typedef Math::Deg<Float> Deg;
 /** @brief Angle in float radians */
 typedef Math::Rad<Float> Rad;
 
-/** @brief Float rectangle */
+/** @brief Float 1D range */
+#ifndef CORRADE_GCC46_COMPATIBILITY
+typedef Math::Range1D<Float> Range1D;
+#else
+typedef Math::Range<1, Float> Range1D;
+#endif
+
+/** @brief Float 2D range */
+typedef Math::Range2D<Float> Range2D;
+
+/** @brief Float 3D range */
+typedef Math::Range3D<Float> Range3D;
+
+/** @brief Signed integer 1D range */
+#ifndef CORRADE_GCC46_COMPATIBILITY
+typedef Math::Range1D<Int> Range1Di;
+#else
+typedef Math::Range<1, Int> Range1Di;
+#endif
+
+/** @brief Signed integer 2D range */
+typedef Math::Range2D<Int> Range2Di;
+
+/** @brief Signed integer 3D range */
+typedef Math::Range3D<Int> Range3Di;
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+/**
+@copybrief Range2D
+@deprecated Use @ref Magnum::Range2D instead.
+*/
 typedef Math::Geometry::Rectangle<Float> Rectangle;
 
-/** @brief Signed integer rectangle */
+/**
+@copybrief Range2Di
+@deprecated Use @ref Magnum::Range2Di instead.
+*/
 typedef Math::Geometry::Rectangle<Int> Rectanglei;
+#endif
 
 /*@}*/
 
@@ -444,13 +478,31 @@ typedef Math::Deg<Double> Degd;
 /** @brief Angle in double radians */
 typedef Math::Rad<Double> Radd;
 
-/** @brief Double rectangle */
+/** @brief Double 1D range */
+#ifndef CORRADE_GCC46_COMPATIBILITY
+typedef Math::Range1D<Double> Range1Dd;
+#else
+typedef Math::Range<1, Double> Range1Dd;
+#endif
+
+/** @brief Double 2D range */
+typedef Math::Range2D<Double> Range2Dd;
+
+/** @brief Double 3D range */
+typedef Math::Range3D<Double> Range3Dd;
+
+#ifdef MAGNUM_BUILD_DEPRECATED
+/**
+@copybrief Range2Dd
+@deprecated Use @ref Magnum::Range2Dd instead.
+*/
 typedef Math::Geometry::Rectangle<Double> Rectangled;
+#endif
 
 /*@}*/
 #endif
 
-#ifndef CORRADE_GCC46_COMPATIBILITY
+#if !defined(CORRADE_GCC46_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
 /* Using angle literals from Math namespace */
 #ifndef MAGNUM_TARGET_GLES
 using Math::operator "" _deg;
@@ -475,7 +527,9 @@ template<class T> class Array1D;
 template<class T> class Array2D;
 template<class T> class Array3D;
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class BufferUsage: GLenum;
+#endif
 class Buffer;
 
 #ifndef MAGNUM_TARGET_GLES2
@@ -487,7 +541,9 @@ typedef BufferImage<3> BufferImage3D;
 
 #ifndef MAGNUM_TARGET_GLES
 class BufferTexture;
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class BufferTextureFormat: GLenum;
+#endif
 #endif
 
 template<class> class BasicColor3;
@@ -495,6 +551,7 @@ template<class> class BasicColor4;
 typedef BasicColor3<Float> Color3;
 typedef BasicColor4<Float> Color4;
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class ColorFormat: GLenum;
 enum class ColorType: GLenum;
 /** @todo Remove this when dropping backward compatibility */
@@ -502,6 +559,8 @@ typedef ColorFormat ImageFormat;
 typedef ColorType ColorType;
 
 enum class Version: Int;
+#endif
+
 class Context;
 class CubeMapTexture;
 
@@ -535,11 +594,15 @@ class SampleQuery;
 class TimeQuery;
 
 class Renderbuffer;
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class RenderbufferFormat: GLenum;
+#endif
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class ResourceState: UnsignedByte;
 enum class ResourceDataState: UnsignedByte;
 enum class ResourcePolicy: UnsignedByte;
+#endif
 template<class T, class U = T> class Resource;
 class ResourceKey;
 template<class...> class ResourceManager;
@@ -554,7 +617,9 @@ typedef Texture<1> Texture1D;
 typedef Texture<2> Texture2D;
 typedef Texture<3> Texture3D;
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class TextureFormat: GLenum;
+#endif
 
 class Timeline;
 

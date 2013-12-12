@@ -34,8 +34,11 @@
 
 namespace Magnum { namespace SceneGraph {
 
-template<UnsignedInt dimensions, class T> AbstractFeatureGroup<dimensions, T>::AbstractFeatureGroup() = default;
-template<UnsignedInt dimensions, class T> AbstractFeatureGroup<dimensions, T>::~AbstractFeatureGroup() = default;
+/* `= default` causes linker errors in GCC 4.5 */
+template<UnsignedInt dimensions, class T> AbstractFeatureGroup<dimensions, T>::AbstractFeatureGroup() {}
+
+/* `= default` causes linker errors in GCC 4.4 */
+template<UnsignedInt dimensions, class T> AbstractFeatureGroup<dimensions, T>::~AbstractFeatureGroup() {}
 
 template<UnsignedInt dimensions, class T> void AbstractFeatureGroup<dimensions, T>::add(AbstractFeature<dimensions, T>& feature) {
     features.push_back(&feature);

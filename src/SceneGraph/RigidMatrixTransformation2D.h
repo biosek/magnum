@@ -134,20 +134,9 @@ template<class T> class BasicRigidMatrixTransformation2D: public AbstractBasicTr
             return transformInternal(Math::Matrix3<T>::reflection(normal), type);
         }
 
-        /**
-         * @brief Move object in stacking order
-         * @param under     Sibling object under which to move or `nullptr`,
-         *      if you want to move it above all.
-         * @return Reference to self (for method chaining)
-         */
-        Object<BasicRigidMatrixTransformation2D<T>>& move(Object<BasicRigidMatrixTransformation2D<T>>* under) {
-            static_cast<Object<BasicRigidMatrixTransformation2D>*>(this)->Containers::template LinkedList<Object<BasicRigidMatrixTransformation2D<T>>>::move(this, under);
-            return static_cast<Object<BasicRigidMatrixTransformation2D<T>>&>(*this);
-        }
-
     protected:
         /* Allow construction only from Object */
-        explicit BasicRigidMatrixTransformation2D() = default;
+        explicit BasicRigidMatrixTransformation2D();
 
     private:
         void doResetTransformation() override final { resetTransformation(); }
@@ -157,7 +146,7 @@ template<class T> class BasicRigidMatrixTransformation2D: public AbstractBasicTr
         }
 
         void doRotate(Math::Rad<T> angle, TransformationType type) override final {
-            doRotate(angle, type);
+            rotate(angle, type);
         }
 
         /* No assertions fired, for internal use */
@@ -181,6 +170,8 @@ template<class T> class BasicRigidMatrixTransformation2D: public AbstractBasicTr
 
         Math::Matrix3<T> _transformation;
 };
+
+template<class T> inline BasicRigidMatrixTransformation2D<T>::BasicRigidMatrixTransformation2D() = default;
 
 /**
 @brief Two-dimensional rigid transformation for float scenes implemented using matrices
@@ -212,6 +203,10 @@ template<class T> struct Transformation<BasicRigidMatrixTransformation2D<T>> {
 };
 
 }
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT Object<BasicRigidMatrixTransformation2D<Float>>;
+#endif
 
 }}
 

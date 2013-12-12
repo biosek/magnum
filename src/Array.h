@@ -33,6 +33,10 @@
 #include "Math/BoolVector.h" /* for Math::Implementation::Sequence */
 #include "Magnum.h"
 
+#ifdef CORRADE_MSVC2013_COMPATIBILITY
+#include <array>
+#endif
+
 namespace Magnum {
 
 /**
@@ -65,7 +69,12 @@ template<UnsignedInt dimensions, class T> class Array {
         #ifdef DOXYGEN_GENERATING_OUTPUT
         template<class ...U> constexpr /*implicit*/ Array(T first, U... next);
         #else
-        template<class ...U, class V = typename std::enable_if<sizeof...(U)+1 == dimensions, T>::type> constexpr /*implicit*/ Array(T first, U... next): _data{first, next...} {}
+        template<class ...U, class V = typename std::enable_if<sizeof...(U)+1 == dimensions, T>::type> constexpr /*implicit*/ Array(T first, U... next):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{first, next...} {}
+            #else
+            _data({first, next...}) {}
+            #endif
         #endif
 
         /** @brief Construct array with one value for all fields */
@@ -107,9 +116,18 @@ template<UnsignedInt dimensions, class T> class Array {
     private:
 
         /* Implementation for Array<dimensions, T>::Array(U) */
-        template<std::size_t ...sequence> constexpr explicit Array(Math::Implementation::Sequence<sequence...>, T value): _data{Math::Implementation::repeat(value, sequence)...} {}
+        template<std::size_t ...sequence> constexpr explicit Array(Math::Implementation::Sequence<sequence...>, T value):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{Math::Implementation::repeat(value, sequence)...} {}
+            #else
+            _data({Math::Implementation::repeat(value, sequence)...}) {}
+            #endif
 
+        #ifndef CORRADE_MSVC2013_COMPATIBILITY
         T _data[dimensions];
+        #else
+        std::array<T, dimensions> _data;
+        #endif
 };
 
 /**

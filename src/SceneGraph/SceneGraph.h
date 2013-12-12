@@ -34,7 +34,9 @@
 
 namespace Magnum { namespace SceneGraph {
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class AspectRatioPolicy: UnsignedByte;
+#endif
 
 template<UnsignedInt, class> class AbstractCamera;
 #ifndef CORRADE_GCC46_COMPATIBILITY
@@ -81,7 +83,9 @@ typedef AbstractObject<2, Float> AbstractObject2D;
 typedef AbstractObject<3, Float> AbstractObject3D;
 #endif
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class TransformationType: UnsignedByte;
+#endif
 
 template<UnsignedInt, class> class AbstractTransformation;
 #ifndef CORRADE_GCC46_COMPATIBILITY
@@ -126,7 +130,9 @@ typedef Animable<2, Float> Animable2D;
 typedef Animable<3, Float> Animable3D;
 #endif
 
+#ifndef CORRADE_GCC45_COMPATIBILITY
 enum class AnimationState: UnsignedByte;
+#endif
 
 template<UnsignedInt, class> class AnimableGroup;
 #ifndef CORRADE_GCC46_COMPATIBILITY

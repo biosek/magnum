@@ -83,7 +83,7 @@ void AbstractImporter::close() {
 }
 
 Buffer::Format AbstractImporter::format() const {
-    CORRADE_ASSERT(isOpened(), "Audio::AbstractImporter::format(): no file opened", {});
+    CORRADE_ASSERT(isOpened(), "Audio::AbstractImporter::format(): no file opened", Buffer::Format());
     return doFormat();
 }
 
@@ -93,7 +93,11 @@ UnsignedInt AbstractImporter::frequency() const {
 }
 
 Containers::Array<unsigned char> AbstractImporter::data() {
+    #ifndef CORRADE_GCC45_COMPATIBILITY
     CORRADE_ASSERT(isOpened(), "Audio::AbstractImporter::data(): no file opened", nullptr);
+    #else
+    CORRADE_ASSERT(isOpened(), "Audio::AbstractImporter::data(): no file opened", {});
+    #endif
     return doData();
 }
 

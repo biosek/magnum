@@ -113,7 +113,18 @@ template<std::size_t cols, std::size_t rows, class T> class RectangularMatrix {
          *
          * @todo Creating matrix from arbitrary combination of matrices with n rows
          */
-        template<class ...U> constexpr /*implicit*/ RectangularMatrix(const Vector<rows, T>& first, const U&... next): _data{first, next...} {
+        #ifndef CORRADE_GCC45_COMPATIBILITY
+        template<class ...U> constexpr /*implicit*/ RectangularMatrix(const Vector<rows, T>& first, const U&... next):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{first, next...}
+            #else
+            _data({first, next...})
+            #endif
+        {
+        #else
+        template<class ...U> /*implicit*/ RectangularMatrix(const Vector<rows, T>& first, const U&... next): _data() {
+            constructInternal({first, next...});
+        #endif
             static_assert(sizeof...(next)+1 == cols, "Improper number of arguments passed to RectangularMatrix constructor");
         }
 
@@ -140,7 +151,12 @@ template<std::size_t cols, std::size_t rows, class T> class RectangularMatrix {
         #ifndef CORRADE_GCC46_COMPATIBILITY
         template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::from(std::declval<U>()))> constexpr explicit RectangularMatrix(const U& other): RectangularMatrix(Implementation::RectangularMatrixConverter<cols, rows, T, U>::from(other)) {}
         #else
-        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::from(std::declval<U>()))> explicit RectangularMatrix(const U& other) {
+        #ifndef CORRADE_GCC44_COMPATIBILITY
+        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::from(std::declval<U>()))> explicit RectangularMatrix(const U& other)
+        #else
+        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::from(*static_cast<const U*>(nullptr)))> explicit RectangularMatrix(const U& other)
+        #endif
+        {
             *this = Implementation::RectangularMatrixConverter<cols, rows, T, U>::from(other);
         }
         #endif
@@ -152,7 +168,12 @@ template<std::size_t cols, std::size_t rows, class T> class RectangularMatrix {
         RectangularMatrix<cols, rows, T>& operator=(const RectangularMatrix<cols, rows, T>&) = default;
 
         /** @brief Convert matrix to external representation */
-        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::to(std::declval<RectangularMatrix<cols, rows, T>>()))> constexpr explicit operator U() const {
+        #ifndef CORRADE_GCC44_COMPATIBILITY
+        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::to(std::declval<RectangularMatrix<cols, rows, T>>()))> constexpr explicit operator U() const
+        #else
+        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<cols, rows, T, U>::to(*static_cast<const RectangularMatrix<cols, rows, T>*>(nullptr)))> constexpr operator U() const
+        #endif
+        {
             /** @bug Why this is not constexpr under GCC 4.6? */
             return Implementation::RectangularMatrixConverter<cols, rows, T, U>::to(*this);
         }
@@ -165,14 +186,14 @@ template<std::size_t cols, std::size_t rows, class T> class RectangularMatrix {
          * @see operator[]
          */
         T* data()
-        #ifndef CORRADE_GCC47_COMPATIBILITY
+        #if !defined(CORRADE_GCC47_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
         &
         #endif
         { return _data[0].data(); }
 
         /** @overload */
         constexpr const T* data()
-        #ifndef CORRADE_GCC47_COMPATIBILITY
+        #if !defined(CORRADE_GCC47_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
         const &
         #else
         const
@@ -373,9 +394,32 @@ template<std::size_t cols, std::size_t rows, class T> class RectangularMatrix {
 
     private:
         /* Implementation for RectangularMatrix<cols, rows, T>::RectangularMatrix(const RectangularMatrix<cols, rows, U>&) */
-        template<class U, std::size_t ...sequence> constexpr explicit RectangularMatrix(Implementation::Sequence<sequence...>, const RectangularMatrix<cols, rows, U>& matrix): _data{Vector<rows, T>(matrix[sequence])...} {}
+        #ifndef CORRADE_GCC45_COMPATIBILITY
+        template<class U, std::size_t ...sequence> constexpr explicit RectangularMatrix(Implementation::Sequence<sequence...>, const RectangularMatrix<cols, rows, U>& matrix):
+            #ifndef CORRADE_MSVC2013_COMPATIBILITY
+            _data{Vector<rows, T>(matrix[sequence])...} {}
+            #else
+            _data({Vector<rows, T>(matrix[sequence])...}) {}
+            #endif
+        #else
+        template<class U, std::size_t ...sequence> explicit RectangularMatrix(Implementation::Sequence<sequence...>, const RectangularMatrix<cols, rows, U>& matrix): _data() {
+            constructInternal({Vector<rows, T>(matrix[sequence])...});
+        }
+        #endif
 
+        #ifdef CORRADE_GCC45_COMPATIBILITY
+        /* GCC < 4.6 workaround for "error: bad array initializer" */
+        void constructInternal(std::initializer_list<Vector<rows, T>> data) {
+            for(std::size_t i = 0; i != data.size(); ++i)
+                _data[i] = *(data.begin() + i);
+        }
+        #endif
+
+        #ifndef CORRADE_MSVC2013_COMPATIBILITY
         Vector<rows, T> _data[cols];
+        #else
+        std::array<Vector<rows, T>, cols> _data;
+        #endif
 };
 
 #ifndef CORRADE_GCC46_COMPATIBILITY
@@ -388,7 +432,9 @@ Convenience alternative to <tt>%RectangularMatrix<2, 3, T></tt>. See
     instead.
 @see @ref Magnum::Matrix2x3, @ref Magnum::Matrix2x3d
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using Matrix2x3 = RectangularMatrix<2, 3, T>;
+#endif
 
 /**
 @brief Matrix with 3 columns and 2 rows
@@ -399,7 +445,9 @@ Convenience alternative to <tt>%RectangularMatrix<3, 2, T></tt>. See
     instead.
 @see @ref Magnum::Matrix3x2, @ref Magnum::Matrix3x2d
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using Matrix3x2 = RectangularMatrix<3, 2, T>;
+#endif
 
 /**
 @brief Matrix with 2 columns and 4 rows
@@ -410,7 +458,9 @@ Convenience alternative to <tt>%RectangularMatrix<2, 4, T></tt>. See
     instead.
 @see @ref Magnum::Matrix2x4, @ref Magnum::Matrix2x4d
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using Matrix2x4 = RectangularMatrix<2, 4, T>;
+#endif
 
 /**
 @brief Matrix with 4 columns and 2 rows
@@ -421,7 +471,9 @@ Convenience alternative to <tt>%RectangularMatrix<4, 2, T></tt>. See
     instead.
 @see @ref Magnum::Matrix4x2, @ref Magnum::Matrix4x2d
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using Matrix4x2 = RectangularMatrix<4, 2, T>;
+#endif
 
 /**
 @brief Matrix with 3 columns and 4 rows
@@ -432,7 +484,9 @@ Convenience alternative to <tt>%RectangularMatrix<3, 4, T></tt>. See
     instead.
 @see @ref Magnum::Matrix3x4, @ref Magnum::Matrix3x4d
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using Matrix3x4 = RectangularMatrix<3, 4, T>;
+#endif
 
 /**
 @brief Matrix with 4 columns and 3 rows
@@ -443,7 +497,9 @@ Convenience alternative to <tt>%RectangularMatrix<4, 3, T></tt>. See
     instead.
 @see @ref Magnum::Matrix4x3, @ref Magnum::Matrix4x3d
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 template<class T> using Matrix4x3 = RectangularMatrix<4, 3, T>;
+#endif
 #endif
 
 /** @relates RectangularMatrix

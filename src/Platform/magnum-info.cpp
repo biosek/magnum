@@ -70,7 +70,8 @@ MagnumInfo::MagnumInfo(const Arguments& arguments): Platform::WindowlessApplicat
 
     /* Create context after parsing arguments, so the help can be displayed
        without creating context */
-    createContext({});
+    /* GCC 4.5 can't handle {} here (wtf) */
+    createContext(Configuration());
     Context* c = Context::current();
 
     /* Pass debug output as messages to JavaScript */
@@ -88,6 +89,12 @@ MagnumInfo::MagnumInfo(const Arguments& arguments): Platform::WindowlessApplicat
 
     Debug() << "Used application: Platform::WindowlessGlxApplication";
     Debug() << "Compilation flags:";
+    #ifdef CORRADE_GCC44_COMPATIBILITY
+    Debug() << "    CORRADE_GCC44_COMPATIBILITY";
+    #endif
+    #ifdef CORRADE_GCC45_COMPATIBILITY
+    Debug() << "    CORRADE_GCC45_COMPATIBILITY";
+    #endif
     #ifdef CORRADE_GCC46_COMPATIBILITY
     Debug() << "    CORRADE_GCC46_COMPATIBILITY";
     #endif
@@ -135,8 +142,8 @@ MagnumInfo::MagnumInfo(const Arguments& arguments): Platform::WindowlessApplicat
 
     Debug() << "Supported GLSL versions:";
     const std::vector<std::string> shadingLanguageVersions = c->shadingLanguageVersionStrings();
-    for(const auto& version: shadingLanguageVersions)
-        Debug() << "   " << version;
+    for(auto it = shadingLanguageVersions.begin(); it != shadingLanguageVersions.end(); ++it)
+        Debug() << "   " << *it;
 
     Debug() << "";
 
@@ -170,7 +177,10 @@ MagnumInfo::MagnumInfo(const Arguments& arguments): Platform::WindowlessApplicat
             Debug() << versions[i] << "extension support:";
         else Debug() << "Vendor extension support:";
 
-        for(const auto& extension: Extension::extensions(versions[i])) {
+        auto extensions = Extension::extensions(versions[i]);
+        for(auto it = extensions.begin(); it != extensions.end(); ++it) {
+            const auto& extension = *it;
+
             std::string extensionName = extension.string();
             Debug d;
             d << "   " << extensionName << std::string(60-extensionName.size(), ' ');
@@ -344,13 +354,11 @@ MagnumInfo::MagnumInfo(const Arguments& arguments): Platform::WindowlessApplicat
     }
     #endif
 
-    #ifndef MAGNUM_TARGET_GLES3
     if(c->isExtensionSupported<Extensions::GL::EXT::texture_filter_anisotropic>()) {
         _h(EXT::texture_filter_anisotropic)
 
         _l(Sampler::maxAnisotropy())
     }
-    #endif
 
     #undef _l
     #undef _h

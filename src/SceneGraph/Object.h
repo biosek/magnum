@@ -94,7 +94,7 @@ class documentation or @ref compilation-speedup-hpp for more information.
 @see @ref Scene, @ref AbstractFeature, @ref AbstractTransformation,
     @ref DebugTools::ObjectRenderer
 */
-template<class Transformation> class MAGNUM_SCENEGRAPH_EXPORT Object: public AbstractObject<Transformation::Dimensions, typename Transformation::Type>, public Transformation
+template<class Transformation> class Object: public AbstractObject<Transformation::Dimensions, typename Transformation::Type>, public Transformation
     #ifndef DOXYGEN_GENERATING_OUTPUT
     , private Containers::LinkedList<Object<Transformation>>, private Containers::LinkedListItem<Object<Transformation>, Object<Transformation>>
     #endif
@@ -117,9 +117,7 @@ template<class Transformation> class MAGNUM_SCENEGRAPH_EXPORT Object: public Abs
          * @brief Constructor
          * @param parent    Parent object
          */
-        explicit Object(Object<Transformation>* parent = nullptr): counter(0xFFFFu), flags(Flag::Dirty) {
-            setParent(parent);
-        }
+        explicit Object(Object<Transformation>* parent = nullptr);
 
         /**
          * @brief Destructor
@@ -258,7 +256,11 @@ template<class Transformation> class MAGNUM_SCENEGRAPH_EXPORT Object: public Abs
          */
         /* `objects` passed by copy intentionally (to allow move from
            transformationMatrices() and avoid copy in the function itself) */
+        #ifndef CORRADE_MSVC2013_COMPATIBILITY
         std::vector<typename Transformation::DataType> transformations(std::vector<Object<Transformation>*> objects, const typename Transformation::DataType& initialTransformation = typename Transformation::DataType()) const;
+        #else
+        std::vector<typename Transformation::DataType> transformations(std::vector<Object<Transformation>*> objects, const typename Transformation::DataType& initialTransformation = Transformation::DataType()) const;
+        #endif
 
         /*@}*/
 
@@ -294,6 +296,13 @@ template<class Transformation> class MAGNUM_SCENEGRAPH_EXPORT Object: public Abs
     #endif
 
     private:
+        /* GCC 4.4 doesn't support lambda functions */
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        struct DirtyCheck {
+            inline bool operator()(Object<Transformation>* o) const { return !o->isDirty(); }
+        };
+        #endif
+
         Object<Transformation>* doScene() override final;
         const Object<Transformation>* doScene() const override final;
 

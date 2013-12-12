@@ -44,6 +44,18 @@
 
 namespace Magnum { namespace Trade {
 
+#ifdef MAGNUM_TARGET_GLES
+namespace {
+    constexpr Math::Vector3<UnsignedByte> bgr(const Math::Vector3<UnsignedByte>& vec) {
+        return Math::swizzle<'b', 'g', 'r'>(vec);
+    }
+
+    constexpr Math::Vector4<UnsignedByte> bgra(const Math::Vector4<UnsignedByte>& vec) {
+        return Math::swizzle<'b', 'g', 'r', 'a'>(vec);
+    }
+}
+#endif
+
 TgaImporter::TgaImporter(): in(nullptr) {}
 
 TgaImporter::TgaImporter(PluginManager::AbstractManager* manager, std::string plugin): AbstractImporter(manager, std::move(plugin)), in(nullptr) {}
@@ -59,7 +71,7 @@ void TgaImporter::doOpenData(const Containers::ArrayReference<const unsigned cha
 }
 
 void TgaImporter::doOpenFile(const std::string& filename) {
-    in = new std::ifstream(filename.c_str());
+    in = new std::ifstream(filename);
     if(in->good()) return;
 
     Error() << "Trade::TgaImporter::openFile(): cannot open file" << filename;
@@ -121,7 +133,7 @@ std::optional<ImageData2D> TgaImporter::doImage2D(UnsignedInt) {
 
     /* Grayscale */
     } else if(header.imageType == 3) {
-        #ifdef MAGNUM_TARGET_GLES
+        #ifdef MAGNUM_TARGET_GLES2
         format = Context::current() && Context::current()->isExtensionSupported<Extensions::GL::EXT::texture_rg>() ?
             ColorFormat::Red : ColorFormat::Luminance;
         #else
@@ -147,12 +159,10 @@ std::optional<ImageData2D> TgaImporter::doImage2D(UnsignedInt) {
     #ifdef MAGNUM_TARGET_GLES
     if(format == ColorFormat::RGB) {
         auto pixels = reinterpret_cast<Math::Vector3<UnsignedByte>*>(data);
-        std::transform(pixels, pixels + size.product(), pixels,
-            [](Math::Vector3<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r'>(pixel); });
+        std::transform(pixels, pixels + size.product(), pixels, bgr);
     } else if(format == ColorFormat::RGBA) {
         auto pixels = reinterpret_cast<Math::Vector4<UnsignedByte>*>(data);
-        std::transform(pixels, pixels + size.product(), pixels,
-            [](Math::Vector4<UnsignedByte> pixel) { return Math::swizzle<'b', 'g', 'r', 'a'>(pixel); });
+        std::transform(pixels, pixels + size.product(), pixels, bgra);
     }
     #endif
 

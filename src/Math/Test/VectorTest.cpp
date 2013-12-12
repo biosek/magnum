@@ -109,7 +109,7 @@ typedef Vector<4, Float> Vector4;
 typedef Vector<4, Int> Vector4i;
 
 VectorTest::VectorTest() {
-    addTests({&VectorTest::construct,
+    addTests<VectorTest>({&VectorTest::construct,
               &VectorTest::constructFromData,
               &VectorTest::constructDefault,
               &VectorTest::constructOneValue,
@@ -242,7 +242,12 @@ void VectorTest::convert() {
 
     /* Implicit conversion is not allowed */
     CORRADE_VERIFY(!(std::is_convertible<Vec3, Vector3>::value));
-    CORRADE_VERIFY(!(std::is_convertible<Vector3, Vec3>::value));
+    {
+        #ifdef CORRADE_GCC44_COMPATIBILITY
+        CORRADE_EXPECT_FAIL("GCC 4.4 doesn't have explicit conversion operators");
+        #endif
+        CORRADE_VERIFY(!(std::is_convertible<Vector3, Vec3>::value));
+    }
 }
 
 void VectorTest::data() {
@@ -450,7 +455,8 @@ void VectorTest::angle() {
 
 template<class T> class BasicVec2: public Math::Vector<2, T> {
     public:
-        template<class ...U> BasicVec2(U&&... args): Math::Vector<2, T>{std::forward<U>(args)...} {}
+        /* MSVC 2013 can't cope with {} here */
+        template<class ...U> BasicVec2(U&&... args): Math::Vector<2, T>(std::forward<U>(args)...) {}
 
         MAGNUM_VECTOR_SUBCLASS_IMPLEMENTATION(2, BasicVec2)
 };

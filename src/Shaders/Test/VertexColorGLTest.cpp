@@ -25,31 +25,35 @@
 #include "Shaders/VertexColor.h"
 #include "Test/AbstractOpenGLTester.h"
 
+#ifdef MAGNUM_BUILD_STATIC
+#include "Shaders/magnumShadersResourceImport.hpp"
+#endif
+
 namespace Magnum { namespace Shaders { namespace Test {
 
-class VertexColorTest: public Magnum::Test::AbstractOpenGLTester {
+class VertexColorGLTest: public Magnum::Test::AbstractOpenGLTester {
     public:
-        explicit VertexColorTest();
+        explicit VertexColorGLTest();
 
         void compile2D();
         void compile3D();
 };
 
-VertexColorTest::VertexColorTest() {
-    addTests({&VertexColorTest::compile2D,
-              &VertexColorTest::compile3D});
+VertexColorGLTest::VertexColorGLTest() {
+    addTests({&VertexColorGLTest::compile2D,
+              &VertexColorGLTest::compile3D});
 }
 
-void VertexColorTest::compile2D() {
+void VertexColorGLTest::compile2D() {
     Shaders::VertexColor2D shader;
     CORRADE_VERIFY(shader.validate().first);
 }
 
-void VertexColorTest::compile3D() {
+void VertexColorGLTest::compile3D() {
     Shaders::VertexColor3D shader;
     CORRADE_VERIFY(shader.validate().first);
 }
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Shaders::Test::VertexColorTest)
+CORRADE_TEST_MAIN(Magnum::Shaders::Test::VertexColorGLTest)

@@ -42,11 +42,18 @@ GlutApplication::GlutApplication(const Arguments& arguments, const Configuration
 #ifndef DOXYGEN_GENERATING_OUTPUT
 GlutApplication::GlutApplication(const Arguments& arguments): c(nullptr) {
     initialize(arguments.argc, arguments.argv);
-    createContext({});
+    /* GCC 4.5 can't handle {} here (wtf) */
+    createContext(Configuration());
 }
 #endif
 
-GlutApplication::GlutApplication(const Arguments& arguments, std::nullptr_t): c(nullptr) {
+#ifndef CORRADE_GCC45_COMPATIBILITY
+GlutApplication::GlutApplication(const Arguments& arguments, std::nullptr_t)
+#else
+GlutApplication::GlutApplication(const Arguments& arguments, void*)
+#endif
+    : c(nullptr)
+{
     initialize(arguments.argc, arguments.argv);
 }
 

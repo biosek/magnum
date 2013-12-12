@@ -1,28 +1,27 @@
 # Author: mosra <mosra@centrum.cz>
 pkgname=magnum
-pkgver=dev
+pkgver=dev.gcc45
 pkgrel=1
-pkgdesc="C++11 and OpenGL 2D/3D graphics engine"
+pkgdesc="C++11 and OpenGL 2D/3D graphics engine (built with GCC 4.5)"
 arch=('i686' 'x86_64')
-url="https://github.com/mosra/magnum"
+url="http://mosra.cz/blog/magnum.php"
 license=('MIT')
 depends=('corrade' 'openal' 'freeglut' 'sdl2')
-makedepends=('cmake' 'ninja')
+makedepends=('cmake' 'ninja' 'gcc45')
 options=(!strip)
 provides=('magnum-git')
 
 build() {
-    mkdir -p "$startdir/build"
-    cd "$startdir/build/"
+    if [ ! -d "$startdir/build-gcc45" ] ; then
+        mkdir "$startdir/build-gcc45"
+        cd "$startdir/build-gcc45"
 
-    # Disable optimization (saves A LOT of compilation time)
-    newcxxflags=$(echo $CXXFLAGS | sed s/-O.//g | sed s/-D_FORTIFY_SOURCE=.//g)
-    export CXXFLAGS="$newcxxflags"
-
-    if [ "$CXX" = clang++ ] ; then
-        newcxxflags=$(echo $CXXFLAGS | sed s/--param=ssp-buffer-size=4//g)
-        export CXXFLAGS="$newcxxflags"
+        cmake .. \
+            -DCMAKE_CXX_COMPILER=g++-4.5 \
+            -G Ninja
     fi
+
+    cd "$startdir/build-gcc45"
 
     cmake .. \
         -DCMAKE_BUILD_TYPE=Debug \
@@ -40,17 +39,16 @@ build() {
         -DWITH_FONTCONVERTER=ON \
         -DWITH_MAGNUMINFO=ON \
         -DBUILD_TESTS=ON \
-        -DBUILD_GL_TESTS=ON \
-        -G Ninja
+        -DBUILD_GL_TESTS=ON
     ninja
 }
 
 check() {
-    cd "$startdir/build"
+    cd "$startdir/build-gcc45"
     ctest --output-on-failure
 }
 
 package() {
-    cd "$startdir/build"
+    cd "$startdir/build-gcc45"
     DESTDIR="$pkgdir/" ninja install
 }

@@ -51,7 +51,7 @@ class AbstractFontConverterTest: public TestSuite::Tester {
 };
 
 AbstractFontConverterTest::AbstractFontConverterTest() {
-    addTests({&AbstractFontConverterTest::convertGlyphs,
+    addTests<AbstractFontConverterTest>({&AbstractFontConverterTest::convertGlyphs,
 
               &AbstractFontConverterTest::exportFontToSingleData,
               &AbstractFontConverterTest::exportFontToFile,
@@ -82,7 +82,11 @@ void AbstractFontConverterTest::convertGlyphs() {
             #endif
             {
                 this->characters = characters;
+                #ifndef CORRADE_GCC45_COMPATIBILITY
                 return nullptr;
+                #else
+                return {};
+                #endif
             }
 
             #ifndef __MINGW32__
@@ -99,8 +103,11 @@ void AbstractFontConverterTest::convertGlyphs() {
     #endif
     GlyphExporter exporter(characters);
     exporter.exportFontToSingleData(*static_cast<AbstractFont*>(nullptr), *static_cast<GlyphCache*>(nullptr), "abC01a0 ");
-    #ifndef __MINGW32__
+    #if !defined(__MINGW32__) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
     CORRADE_COMPARE(characters, U" 01Cab");
+    #elif defined(CORRADE_MSVC2013_COMPATIBILITY)
+    CORRADE_COMPARE(characters, (std::u32string{
+            ' ', '0', '1', 'C', 'a', 'b'}));
     #else
     CORRADE_COMPARE(characters, (std::vector<char32_t>{
             U' ', U'0', U'1', U'C', U'a', U'b'}));
@@ -164,7 +171,8 @@ void AbstractFontConverterTest::exportFontToFile() {
 
     /* doExportToFile() should call doExportToData() */
     DataExporter exporter;
-    bool exported = exporter.exportFontToFile(*static_cast<AbstractFont*>(nullptr), *static_cast<GlyphCache*>(nullptr), Utility::Directory::join(TEXT_TEST_OUTPUT_DIR, "font.out"), {});
+    /* MSVC 2013 can't handle {} here */
+    bool exported = exporter.exportFontToFile(*static_cast<AbstractFont*>(nullptr), *static_cast<GlyphCache*>(nullptr), Utility::Directory::join(TEXT_TEST_OUTPUT_DIR, "font.out"), std::string());
     CORRADE_VERIFY(exported);
     CORRADE_COMPARE_AS(Utility::Directory::join(TEXT_TEST_OUTPUT_DIR, "font.out"),
                        "\xf0", TestSuite::Compare::FileToString);
@@ -236,7 +244,7 @@ class SingleGlyphCacheDataImporter: public Text::AbstractFontConverter {
         std::unique_ptr<GlyphCache> doImportGlyphCacheFromSingleData(const Containers::ArrayReference<const unsigned char> data) const override {
             if(data.size() == 1 && data[0] == 0xa5)
                 return std::unique_ptr<GlyphCache>(reinterpret_cast<GlyphCache*>(0xdeadbeef));
-            return nullptr;
+            return {};
         }
 };
 
@@ -246,7 +254,7 @@ void AbstractFontConverterTest::importGlyphCacheFromSingleData() {
     /* doImportFromData() should call doImportFromSingleData() */
     SingleGlyphCacheDataImporter importer;
     const unsigned char data[] = {0xa5};
-    std::unique_ptr<GlyphCache> cache = importer.importGlyphCacheFromData({{{}, data}});
+    std::unique_ptr<GlyphCache> cache = importer.importGlyphCacheFromData(std::vector<std::pair<std::string, Containers::ArrayReference<const unsigned char>>>{{{}, data}});
     CORRADE_COMPARE(cache.get(), reinterpret_cast<GlyphCache*>(0xdeadbeef));
 
     /* The pointer is invalid, avoid deletion */

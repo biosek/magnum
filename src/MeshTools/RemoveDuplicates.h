@@ -95,9 +95,9 @@ template<class Vertex, std::size_t vertexSize> void RemoveDuplicates<Vertex, ver
 
     /* Get mesh bounds */
     Vertex min = vertices[0], max = vertices[0];
-    for(const auto& v: vertices) {
-        min = Math::min(v, min);
-        max = Math::max(v, max);
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+        min = Math::min(*it, min);
+        max = Math::max(*it, max);
     }
 
     /* Make epsilon so large that std::size_t can index all vertices inside
@@ -113,15 +113,17 @@ template<class Vertex, std::size_t vertexSize> void RemoveDuplicates<Vertex, ver
            and index of vertex in the face. */
         std::unordered_map<Math::Vector<vertexSize, std::size_t>, HashedVertex, IndexHash> table;
 
+        #ifndef CORRADE_GCC44_COMPATIBILITY
         /* Reserve space for all vertices */
         table.reserve(vertices.size());
+        #endif
 
         /* Go through all faces' vertices */
         for(auto it = indices.begin(); it != indices.end(); ++it) {
             /* Index of a vertex in vertexSize-dimensional table */
             std::size_t index[vertexSize];
             for(std::size_t ii = 0; ii != vertexSize; ++ii)
-                index[ii] = (vertices[*it][ii]+moved[ii]-min[ii])/epsilon;
+                index[ii] = std::size_t((vertices[*it][ii]+moved[ii]-min[ii])/epsilon);
 
             /* Try inserting the vertex into table, if it already
                exists, change vertex pointer of the face to already

@@ -31,14 +31,17 @@ namespace Magnum {
 
 Minimal set of tools and libraries required for building is:
 
-- C++ compiler with good C++11 support. Currently there are two compilers
-  which are tested to support everything needed: **GCC** >= 4.6 and **Clang**
-  >= 3.1. On Windows you can use **MinGW**, Visual Studio compiler still lacks
-  some needed features.
-- **CMake** >= 2.8.8
-- **Corrade** - Plugin management and utility library. See
-  @ref building-corrade "Corrade download and installation guide" for more
-  information.
+-   C++ compiler with good C++11 support. Currently there are two compilers
+    which are tested to have everything needed: **GCC** >= 4.6 and **Clang**
+    >= 3.1. On Windows you can use **MinGW**. GCC 4.5, 4.4 and **MSVC** 2013
+    support involves some ugly workarounds and thus is available only in
+    `compatibility` branch.
+-   **CMake** >= 2.8.8
+-   **Corrade** - Plugin management and utility library. See
+    @ref building-corrade "Corrade download and installation guide" for more
+    information.
+
+Note that full feature set is available only on GCC 4.8.1 and Clang 3.1.
 
 @section building-download Downloading the sources
 
@@ -47,6 +50,12 @@ repository with your favorite IDE or Git GUI, download currrent snapshot as
 compressed archive or use the command line:
 
     git clone git://github.com/mosra/magnum.git
+
+If you need to use the `compatibility` branch, check it out as following from
+the cloned repository or download the particular archive from
+https://github.com/mosra/magnum/tree/compatibility.
+
+    git checkout compatibility
 
 @section building-compilation Compilation, installation
 
@@ -250,20 +259,16 @@ Integration with various external math and physics libraries is provided by
 
 @subsection building-packages-arch ArchLinux packages
 
-In `package/archlinux` directory is currently one PKGBUILD for Git development
+In `package/archlinux` directory is currently one package for Git development
 build. The package is also in AUR under the same name.
 
-There are also a few development PKGBUILDs in project root, which allow you to
-build and install the package directly from source tree without downloading
-anything. The native PKGBUILD also contains `check()` function which will run
-all unit tests before packaging.
+There are also a few development PKGBUILDs in `package/archlinux`, which allow
+you to build and install the package directly from source tree without
+downloading anything. The native PKGBUILDs also contain `check()` function
+which will run all unit tests before packaging. You need to build them from
+project root:
 
-If you want to build with another compiler (e.g. Clang), run makepkg this way:
-
-    CXX=clang++ makepkg
-
-Development PKGBUILDs can detect when Clang is used and remove unsupported CXX
-flags.
+    makepkg -p package/archlinux/<file>
 
 @section building-crosscompiling Crosscompiling
 
@@ -385,6 +390,38 @@ depending projects.
 If you have Node.js installed, you can also build and run unit tests using
 `ctest`. See `BUILD_TESTS` above.
 
+@section building-ci-jenkins Jenkins Continuous Integration
+
+In `package/ci/` there are `jenkins.xml` and `jenkins-gltests.xml` files
+containing job configuration, one for build and non-GL tests and the other for
+GL tests only. Setup your Jenkins server, enable the **Git** and
+**Text-finder** plugin and download the CLI application from here:
+
+    http://your-jenkins-server/cli
+
+Then add new jobs or update existing ones (replace `<command>` with `create-job`
+or `update-job`).
+
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> Magnum-Compatibility < jenkins.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> Magnum-Compatibility-GLTests < jenkins-gltests.xml
+
+Build is done using **Ninja** build system and everything possible is enabled,
+thus you need also **SDL2**, **GLUT** and **OpenAL** libraries. It expects that
+**GCC** >=4.8.2, 4.7, 4.6, 4.5, 4.4 and **Clang** are installed and there are
+**OpenGL**, **OpenGL ES 2.0** and **OpenGL ES 3.0** librares as it tries to
+compile the library with every combination of them. You can add/remove the axes
+in `axes/hudson.matrix.TextAxis` or via the web interface later.
+
+Magnum-Compatibility-GLTests depend on active X11 session, thus they should be
+run from Jenkins instance running on graphical user session.
+
+There is also MinGW32 and Emscripten configuration, add or update them with the
+commands below. See @ref building-crosscompiling for more information about
+setting up the crosscompilers and `toolchains/` submodule. For Emscripten you
+need also **Node.js** installed to run the tests.
+
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> Magnum-MinGW32 < jenkins-mingw32.xml
+    java -jar jenkins-cli.jar -s http://your-jenkins-server <command> Magnum-Emscripten < jenkins-emscripten.xml
 */
 
 }

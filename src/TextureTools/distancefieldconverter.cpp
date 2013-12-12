@@ -25,7 +25,7 @@
 #include <Utility/Arguments.h>
 #include <PluginManager/Manager.h>
 
-#include "Math/Geometry/Rectangle.h"
+#include "Math/Range.h"
 #include "ColorFormat.h"
 #include "Image.h"
 #include "Renderer.h"
@@ -61,7 +61,8 @@ DistanceFieldConverter::DistanceFieldConverter(const Arguments& arguments): Wind
         .setHelp("Converts black&white image to distance-field representation.")
         .parse(arguments.argc, arguments.argv);
 
-    createContext({});
+    /* GCC 4.5 can't handle {} here (wtf) */
+    createContext(Configuration());
 }
 
 int DistanceFieldConverter::exec() {

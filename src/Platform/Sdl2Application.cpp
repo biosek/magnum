@@ -68,11 +68,18 @@ Sdl2Application::Sdl2Application(const Arguments&, const Configuration& configur
 #ifndef DOXYGEN_GENERATING_OUTPUT
 Sdl2Application::Sdl2Application(const Arguments&): context(nullptr), flags(Flag::Redraw) {
     initialize();
-    createContext({});
+    /* GCC 4.5 can't handle {} here (wtf) */
+    createContext(Configuration());
 }
 #endif
 
-Sdl2Application::Sdl2Application(const Arguments&, std::nullptr_t): context(nullptr), flags(Flag::Redraw) {
+#ifndef CORRADE_GCC45_COMPATIBILITY
+Sdl2Application::Sdl2Application(const Arguments&, std::nullptr_t)
+#else
+Sdl2Application::Sdl2Application(const Arguments&, void*)
+#endif
+    : context(nullptr), flags(Flag::Redraw)
+{
     initialize();
 }
 
@@ -254,13 +261,13 @@ Sdl2Application::Configuration::~Configuration() = default;
 Sdl2Application::InputEvent::Modifiers Sdl2Application::MouseEvent::modifiers() {
     if(modifiersLoaded) return _modifiers;
     modifiersLoaded = true;
-    return _modifiers = fixedModifiers(SDL_GetModState());
+    return _modifiers = fixedModifiers(Uint16(SDL_GetModState()));
 }
 
 Sdl2Application::InputEvent::Modifiers Sdl2Application::MouseMoveEvent::modifiers() {
     if(modifiersLoaded) return _modifiers;
     modifiersLoaded = true;
-    return _modifiers = fixedModifiers(SDL_GetModState());
+    return _modifiers = fixedModifiers(Uint16(SDL_GetModState()));
 }
 
 template class BasicScreen<Sdl2Application>;

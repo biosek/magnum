@@ -32,11 +32,20 @@ MeshData3D::MeshData3D(Mesh::Primitive primitive, std::vector<UnsignedInt> indic
     CORRADE_ASSERT(!_positions.empty(), "Trade::MeshData3D: no position array specified", );
 }
 
-MeshData3D::MeshData3D(MeshData3D&&) = default;
+/* GCC 4.4 doesn't like it defaulted */
+MeshData3D::MeshData3D(MeshData3D&& other): _primitive(other._primitive), _indices(std::move(other._indices)), _positions(std::move(other._positions)), _normals(std::move(other._normals)), _textureCoords2D(std::move(other._textureCoords2D)) {}
 
 MeshData3D::~MeshData3D() = default;
 
-MeshData3D& MeshData3D::operator=(MeshData3D&&) = default;
+/* GCC 4.5 doesn't like it defaulted */
+MeshData3D& MeshData3D::operator=(MeshData3D&& other) {
+    std::swap(_primitive, other._primitive);
+    std::swap(_indices, other._indices);
+    std::swap(_positions, other._positions);
+    std::swap(_normals, other._normals);
+    std::swap(_textureCoords2D, other._textureCoords2D);
+    return *this;
+}
 
 std::vector<UnsignedInt>& MeshData3D::indices() {
     CORRADE_ASSERT(isIndexed(), "Trade::MeshData3D::indices(): the mesh is not indexed", _indices);

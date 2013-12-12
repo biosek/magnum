@@ -40,10 +40,21 @@ namespace {
 template<UnsignedInt dimensions> VertexColor<dimensions>::VertexColor(): transformationProjectionMatrixUniform(0) {
     Utility::Resource rs("MagnumShaders");
 
+    /* Weird bug in GCC 4.5 - cannot use initializer list here, although the
+       same thing works in PhongShader flawlessly*/
+    #ifndef CORRADE_GCC45_COMPATIBILITY
     #ifndef MAGNUM_TARGET_GLES
     const Version version = Context::current()->supportedVersion({Version::GL320, Version::GL310, Version::GL300, Version::GL210});
     #else
     const Version version = Context::current()->supportedVersion({Version::GLES300, Version::GLES200});
+    #endif
+    #else
+    #ifndef MAGNUM_TARGET_GLES
+    std::initializer_list<Version> vs{Version::GL320, Version::GL210};
+    #else
+    std::initializer_list<Version> vs{Version::GLES300, Version::GLES200};
+    #endif
+    Version version = Context::current()->supportedVersion(vs);
     #endif
 
     Shader vert(version, Shader::Type::Vertex);

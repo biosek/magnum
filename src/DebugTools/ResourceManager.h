@@ -41,11 +41,25 @@
 
 #include "magnumDebugToolsVisibility.h"
 
+#ifdef CORRADE_MSVC2013_COMPATIBILITY
+#include "AbstractShaderProgram.h"
+#include "Buffer.h"
+#include "Mesh.h"
+#include "MeshView.h"
+#include "DebugTools/ForceRenderer.h"
+#include "DebugTools/ObjectRenderer.h"
+#include "DebugTools/ShapeRenderer.h"
+#endif
+
 namespace Magnum {
 
 /** @todo Do the listing in one place, not five thousand! */
 
+#ifndef _WIN32
 extern template ResourceManager<AbstractShaderProgram, Buffer, Mesh, MeshView, DebugTools::ForceRendererOptions, DebugTools::ObjectRendererOptions, DebugTools::ShapeRendererOptions> MAGNUM_DEBUGTOOLS_EXPORT *& ResourceManager<AbstractShaderProgram, Buffer, Mesh, MeshView, DebugTools::ForceRendererOptions, DebugTools::ObjectRendererOptions, DebugTools::ShapeRendererOptions>::internalInstance();
+#else
+extern template class MAGNUM_DEBUGTOOLS_EXPORT ResourceManager<AbstractShaderProgram, Buffer, Mesh, MeshView, DebugTools::ForceRendererOptions, DebugTools::ObjectRendererOptions, DebugTools::ShapeRendererOptions>;
+#endif
 
 namespace DebugTools {
 

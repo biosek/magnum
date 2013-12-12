@@ -134,7 +134,7 @@ template<class T> class BasicDualQuaternionTransformation: public AbstractBasicT
 
     protected:
         /* Allow construction only from Object */
-        explicit BasicDualQuaternionTransformation() = default;
+        explicit BasicDualQuaternionTransformation();
 
     private:
         void doResetTransformation() override final { resetTransformation(); }
@@ -169,6 +169,8 @@ template<class T> class BasicDualQuaternionTransformation: public AbstractBasicT
         Math::DualQuaternion<T> _transformation;
 };
 
+template<class T> inline BasicDualQuaternionTransformation<T>::BasicDualQuaternionTransformation() = default;
+
 /**
 @brief Three-dimensional transformation for float scenes implemented using dual quaternions
 
@@ -199,6 +201,10 @@ template<class T> struct Transformation<BasicDualQuaternionTransformation<T>> {
 };
 
 }
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT Object<BasicDualQuaternionTransformation<Float>>;
+#endif
 
 }}
 

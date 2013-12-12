@@ -68,6 +68,7 @@ class Vector2Test: public Corrade::TestSuite::Tester {
         void scales();
         void perpendicular();
         void aspectRatio();
+        void minmax();
 
         void swizzleType();
         void debug();
@@ -79,7 +80,7 @@ typedef Math::Vector2<Float> Vector2;
 typedef Math::Vector2<Int> Vector2i;
 
 Vector2Test::Vector2Test() {
-    addTests({&Vector2Test::construct,
+    addTests<Vector2Test>({&Vector2Test::construct,
               &Vector2Test::constructDefault,
               &Vector2Test::constructOneValue,
               &Vector2Test::constructConversion,
@@ -93,6 +94,7 @@ Vector2Test::Vector2Test() {
               &Vector2Test::scales,
               &Vector2Test::perpendicular,
               &Vector2Test::aspectRatio,
+              &Vector2Test::minmax,
 
               &Vector2Test::swizzleType,
               &Vector2Test::debug,
@@ -100,7 +102,11 @@ Vector2Test::Vector2Test() {
 }
 
 void Vector2Test::construct() {
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     constexpr Vector2 a = {1.5f, 2.5f};
+    #else
+    constexpr Vector2 a(1.5f, 2.5f); /* Ambiguity with default copy constructor */
+    #endif
     CORRADE_COMPARE(a, (Vector<2, Float>(1.5f, 2.5f)));
 }
 
@@ -154,7 +160,12 @@ void Vector2Test::convert() {
 
     /* Implicit conversion is not allowed */
     CORRADE_VERIFY(!(std::is_convertible<Vec2, Vector2>::value));
-    CORRADE_VERIFY(!(std::is_convertible<Vector2, Vec2>::value));
+    {
+        #ifdef CORRADE_GCC44_COMPATIBILITY
+        CORRADE_EXPECT_FAIL("GCC 4.4 doesn't have explicit conversion operators");
+        #endif
+        CORRADE_VERIFY(!(std::is_convertible<Vector2, Vec2>::value));
+    }
 }
 
 void Vector2Test::access() {
@@ -199,13 +210,24 @@ void Vector2Test::perpendicular() {
 }
 
 void Vector2Test::aspectRatio() {
-    const Vector2 a(3.0f, 4.0f);
-    CORRADE_COMPARE(a.aspectRatio(), 0.75f);
+    CORRADE_COMPARE(Vector2(3.0f, 4.0f).aspectRatio(), 0.75f);
+}
+
+void Vector2Test::minmax() {
+    const auto expected = std::make_pair(-5.0f, 4.0f);
+    CORRADE_COMPARE(Vector2(-5.0f, 4.0f).minmax(), expected);
+    CORRADE_COMPARE(Vector2(4.0f, -5.0f).minmax(), expected);
 }
 
 void Vector2Test::swizzleType() {
     constexpr Vector<4, Int> orig;
-    constexpr auto a = swizzle<'y', 'a'>(orig);
+
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr
+    #else
+    const
+    #endif
+    auto a = swizzle<'y', 'a'>(orig);
     CORRADE_VERIFY((std::is_same<decltype(a), const Vector2i>::value));
 }
 

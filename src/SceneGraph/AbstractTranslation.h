@@ -51,7 +51,7 @@ template<UnsignedInt dimensions, class T, class TranslationType>
 #endif
 class AbstractTranslation: public AbstractTransformation<dimensions, T> {
     public:
-        explicit AbstractTranslation() = default;
+        explicit AbstractTranslation();
 
         /**
          * @brief Translate object
@@ -62,13 +62,13 @@ class AbstractTranslation: public AbstractTransformation<dimensions, T> {
          * @see @ref Vector2::xAxis(), @ref Vector2::yAxis(), @ref Vector3::xAxis(),
          *      @ref Vector3::yAxis(), @ref Vector3::zAxis()
          */
-        AbstractTranslation<dimensions, T>& translate(const typename DimensionTraits<dimensions, TranslationType>::VectorType& vector, TransformationType type = TransformationType::Global) {
+        AbstractTranslation<dimensions, T, TranslationType>& translate(const typename DimensionTraits<dimensions, TranslationType>::VectorType& vector, TransformationType type = TransformationType::Global) {
             doTranslate(vector, type);
             return *this;
         }
 
     protected:
-        ~AbstractTranslation() = default;
+        ~AbstractTranslation();
 
     #ifdef DOXYGEN_GENERATING_OUTPUT
     protected:
@@ -78,6 +78,10 @@ class AbstractTranslation: public AbstractTransformation<dimensions, T> {
         /** @brief Polymorphic implementation for translate() */
         virtual void doTranslate(const typename DimensionTraits<dimensions, TranslationType>::VectorType& vector, TransformationType type) = 0;
 };
+
+template<UnsignedInt dimensions, class T, class TranslationType> AbstractTranslation<dimensions, T, TranslationType>::AbstractTranslation() = default;
+
+template<UnsignedInt dimensions, class T, class TranslationType> AbstractTranslation<dimensions, T, TranslationType>::~AbstractTranslation() = default;
 
 #ifndef CORRADE_GCC46_COMPATIBILITY
 /**
@@ -89,12 +93,14 @@ See @ref AbstractTranslation for more information.
     instead.
 @see @ref AbstractTranslation2D, @ref AbstractBasicTranslation3D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T, class TranslationType = T>
 #else
 template<class T, class TranslationType>
 #endif
 using AbstractBasicTranslation2D = AbstractTranslation<2, T, TranslationType>;
+#endif
 #endif
 
 /**
@@ -118,12 +124,14 @@ See @ref AbstractTranslation for more information.
     instead.
 @see @ref AbstractTranslation3D, @ref AbstractBasicTranslation2D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T, class TranslationType = T>
 #else
 template<class T, class TranslationType>
 #endif
 using AbstractBasicTranslation3D = AbstractTranslation<3, T, TranslationType>;
+#endif
 #endif
 
 /**

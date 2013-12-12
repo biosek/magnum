@@ -71,7 +71,7 @@ Int Framebuffer::maxColorAttachments() {
     return value;
 }
 
-Framebuffer::Framebuffer(const Rectanglei& viewport) {
+Framebuffer::Framebuffer(const Range2Di& viewport) {
     _viewport = viewport;
 
     glGenFramebuffers(1, &_id);
@@ -89,15 +89,15 @@ Framebuffer::~Framebuffer() {
 Framebuffer& Framebuffer::mapForDraw(std::initializer_list<std::pair<UnsignedInt, DrawAttachment>> attachments) {
     /* Max attachment location */
     std::size_t max = 0;
-    for(const auto& attachment: attachments)
-        if(attachment.first > max) max = attachment.first;
+    for(auto it = attachments.begin(); it != attachments.end(); ++it)
+        if(it->first > max) max = it->first;
 
     /* Create linear array from associative */
     /** @todo C++14: use VLA to avoid heap allocation */
     static_assert(GL_NONE == 0, "Expecting zero GL_NONE for zero-initialization");
     auto _attachments = Containers::Array<GLenum>::zeroInitialized(max+1);
-    for(const auto& attachment: attachments)
-        _attachments[attachment.first] = GLenum(attachment.second);
+    for(auto it = attachments.begin(); it != attachments.end(); ++it)
+        _attachments[it->first] = GLenum(it->second);
 
     (this->*drawBuffersImplementation)(max+1, _attachments);
     return *this;
@@ -112,7 +112,7 @@ void Framebuffer::invalidate(std::initializer_list<InvalidationAttachment> attac
     invalidateImplementation(attachments.size(), _attachments);
 }
 
-void Framebuffer::invalidate(std::initializer_list<InvalidationAttachment> attachments, const Rectanglei& rectangle) {
+void Framebuffer::invalidate(std::initializer_list<InvalidationAttachment> attachments, const Range2Di& rectangle) {
     /** @todo C++14: use VLA to avoid heap allocation */
     Containers::Array<GLenum> _attachments(attachments.size());
     for(std::size_t i = 0; i != attachments.size(); ++i)

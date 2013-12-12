@@ -43,7 +43,12 @@ template<UnsignedInt dimensions, class T> AbstractObject<dimensions, T>::~Abstra
 
 template<UnsignedInt dimensions, class T> AbstractTransformation<dimensions, T>::AbstractTransformation() {}
 
-template<class Transformation> Object<Transformation>::~Object() = default;
+template<class Transformation> Object<Transformation>::Object(Object<Transformation>* parent): counter(0xFFFFu), flags(Flag::Dirty) {
+    setParent(parent);
+}
+
+/* `= default` causes linker errors in GCC 4.4 */
+template<class Transformation> Object<Transformation>::~Object() {}
 
 template<class Transformation> Scene<Transformation>* Object<Transformation>::scene() {
     Object<Transformation>* p(this);
@@ -194,7 +199,7 @@ computed and recursively concatenated together. Resulting transformations for
 joints which were originally in `object` list is then returned.
 */
 template<class Transformation> std::vector<typename Transformation::DataType> Object<Transformation>::transformations(std::vector<Object<Transformation>*> objects, const typename Transformation::DataType& initialTransformation) const {
-    CORRADE_ASSERT(objects.size() < 0xFFFFu, "SceneGraph::Object::transformations(): too large scene", {});
+    CORRADE_ASSERT(objects.size() < 0xFFFFu, "SceneGraph::Object::transformations(): too large scene", std::vector<typename Transformation::DataType>{});
 
     /* Remember object count for later */
     std::size_t objectCount = objects.size();
@@ -208,7 +213,7 @@ template<class Transformation> std::vector<typename Transformation::DataType> Ob
            with different counter */
         if(objects[i]->counter != 0xFFFFu) continue;
 
-        objects[i]->counter = i;
+        objects[i]->counter = UnsignedShort(i);
         objects[i]->flags |= Flag::Joint;
     }
     std::vector<Object<Transformation>*> jointObjects(objects);
@@ -217,7 +222,7 @@ template<class Transformation> std::vector<typename Transformation::DataType> Ob
     const Scene<Transformation>* scene = this->scene();
 
     /* Nearest common ancestor not yet implemented - assert this is done on scene */
-    CORRADE_ASSERT(scene == this, "SceneGraph::Object::transformationMatrices(): currently implemented only for Scene", {});
+    CORRADE_ASSERT(scene == this, "SceneGraph::Object::transformationMatrices(): currently implemented only for Scene", std::vector<typename Transformation::DataType>{});
 
     /* Mark all objects up the hierarchy as visited */
     auto it = objects.begin();
@@ -235,7 +240,7 @@ template<class Transformation> std::vector<typename Transformation::DataType> Ob
 
         /* If this is root object, remove from list */
         if(!parent) {
-            CORRADE_ASSERT(*it == scene, "SceneGraph::Object::transformations(): the objects are not part of the same tree", {});
+            CORRADE_ASSERT(*it == scene, "SceneGraph::Object::transformations(): the objects are not part of the same tree", std::vector<typename Transformation::DataType>{});
             it = objects.erase(it);
 
         /* Parent is an joint or already visited - remove current from list */
@@ -246,9 +251,9 @@ template<class Transformation> std::vector<typename Transformation::DataType> Ob
                list of joint objects */
             if(!(parent->flags & Flag::Joint)) {
                 CORRADE_ASSERT(jointObjects.size() < 0xFFFFu,
-                               "SceneGraph::Object::transformations(): too large scene", {});
+                               "SceneGraph::Object::transformations(): too large scene", std::vector<typename Transformation::DataType>{});
                 CORRADE_INTERNAL_ASSERT(parent->counter == 0xFFFFu);
-                parent->counter = jointObjects.size();
+                parent->counter = UnsignedShort(jointObjects.size());
                 parent->flags |= Flag::Joint;
                 jointObjects.push_back(parent);
             }
@@ -275,12 +280,19 @@ template<class Transformation> std::vector<typename Transformation::DataType> Ob
     }
 
     /* All visited marks are now cleaned, clean joint marks and counters */
-    for(auto i: jointObjects) {
+    for(auto it = jointObjects.begin(); it != jointObjects.end(); ++it) {
         /* All not-already cleaned objects (...duplicate occurences) should
            have joint mark */
-        CORRADE_INTERNAL_ASSERT(i->counter = 0xFFFFu || i->flags & Flag::Joint);
-        i->flags &= ~Flag::Joint;
-        i->counter = 0xFFFFu;
+        CORRADE_INTERNAL_ASSERT((*it)->counter == 0xFFFFu || (*it)->flags & Flag::Joint);
+        #ifndef CORRADE_GCC45_COMPATIBILITY
+        (*it)->flags &= ~Flag::Joint;
+        #else
+        /* Miscompiled in Release build, causes ICE in Debug build:
+           internal compiler error: in make_decl_rtl, at varasm.c:1318
+           http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43880 */
+        (*it)->flags = (*it)->flags & ~Flag::Joint;
+        #endif
+        (*it)->counter = 0xFFFFu;
     }
 
     /* Shrink the array to contain only transformations of requested objects and return */
@@ -302,7 +314,13 @@ template<class Transformation> typename Transformation::DataType Object<Transfor
     for(;;) {
         /* Clean visited mark */
         CORRADE_INTERNAL_ASSERT(o->flags & Flag::Visited);
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         o->flags &= ~Flag::Visited;
+        #else
+        /* Miscompiled (the above assertion is triggered later), see above for
+           more information */
+        o->flags = o->flags & ~Flag::Visited;
+        #endif
 
         Object<Transformation>* parent = o->parent();
 
@@ -336,7 +354,7 @@ template<class Transformation> void Object<Transformation>::doSetClean(const std
 
 template<class Transformation> void Object<Transformation>::setClean(std::vector<Object<Transformation>*> objects) {
     /* Remove all clean objects from the list */
-    auto firstClean = std::remove_if(objects.begin(), objects.end(), [](Object<Transformation>* o) { return !o->isDirty(); });
+    auto firstClean = std::remove_if(objects.begin(), objects.end(), DirtyCheck());
     objects.erase(firstClean, objects.end());
 
     /* No dirty objects left, done */
@@ -356,7 +374,14 @@ template<class Transformation> void Object<Transformation>::setClean(std::vector
     }
 
     /* Cleanup all marks */
-    for(auto o: objects) o->flags &= ~Flag::Visited;
+    for(auto it = objects.begin(); it != objects.end(); ++it)
+        #ifndef CORRADE_GCC45_COMPATIBILITY
+        (*it)->flags &= ~Flag::Visited;
+        #else
+        /* Miscompiled (not all objects are cleaned), see above for more
+           information */
+        (*it)->flags = (*it)->flags & ~Flag::Visited;
+        #endif
 
     /* Compute absolute transformations */
     Scene<Transformation>* scene = objects[0]->scene();
@@ -405,7 +430,13 @@ template<class Transformation> void Object<Transformation>::setClean(const typen
     }
 
     /* Mark object as clean */
+    #ifndef CORRADE_GCC45_COMPATIBILITY
     flags &= ~Flag::Dirty;
+    #else
+    /* Miscompiled (not all objects are cleaned), see above for more
+       information */
+    flags = flags & ~Flag::Dirty;
+    #endif
 }
 
 }}

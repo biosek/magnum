@@ -79,7 +79,7 @@ typedef Math::Vector3<Int> Vector3i;
 typedef Math::Vector2<Float> Vector2;
 
 Vector3Test::Vector3Test() {
-    addTests({&Vector3Test::construct,
+    addTests<Vector3Test>({&Vector3Test::construct,
               &Vector3Test::constructDefault,
               &Vector3Test::constructOneValue,
               &Vector3Test::constructParts,
@@ -100,7 +100,11 @@ Vector3Test::Vector3Test() {
 }
 
 void Vector3Test::construct() {
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     constexpr Vector3 a = {1.0f, 2.5f, -3.0f};
+    #else
+    constexpr Vector3 a(1.0f, 2.5f, -3.0f); /* Ambiguity with default copy constructor */
+    #endif
     CORRADE_COMPARE(a, (Vector<3, Float>(1.0f, 2.5f, -3.0f)));
 }
 
@@ -161,7 +165,12 @@ void Vector3Test::convert() {
 
     /* Implicit conversion is not allowed */
     CORRADE_VERIFY(!(std::is_convertible<Vec3, Vector3>::value));
-    CORRADE_VERIFY(!(std::is_convertible<Vector3, Vec3>::value));
+    {
+        #ifdef CORRADE_GCC44_COMPATIBILITY
+        CORRADE_EXPECT_FAIL("GCC 4.4 doesn't have explicit conversion operators");
+        #endif
+        CORRADE_VERIFY(!(std::is_convertible<Vector3, Vec3>::value));
+    }
 }
 
 void Vector3Test::access() {
@@ -226,7 +235,13 @@ void Vector3Test::twoComponent() {
 
 void Vector3Test::swizzleType() {
     constexpr Vector<4, Int> orig;
-    constexpr auto b = swizzle<'y', 'z', 'a'>(orig);
+
+    #if !defined(CORRADE_GCC45_COMPATIBILITY) && !defined(CORRADE_MSVC2013_COMPATIBILITY)
+    constexpr
+    #else
+    const
+    #endif
+    auto b = swizzle<'y', 'z', 'a'>(orig);
     CORRADE_VERIFY((std::is_same<decltype(b), const Vector3i>::value));
 }
 

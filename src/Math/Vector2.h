@@ -114,7 +114,11 @@ template<class T> class Vector2: public Vector<2, T> {
         template<class U> constexpr explicit Vector2(const Vector<2, U>& other): Vector<2, T>(other) {}
 
         /** @brief Construct vector from external representation */
+        #ifndef CORRADE_GCC44_COMPATIBILITY
         template<class U, class V = decltype(Implementation::VectorConverter<2, T, U>::from(std::declval<U>()))> constexpr explicit Vector2(const U& other): Vector<2, T>(Implementation::VectorConverter<2, T, U>::from(other)) {}
+        #else
+        template<class U, class V = decltype(Implementation::VectorConverter<2, T, U>::from(*static_cast<const U*>(nullptr)))> constexpr explicit Vector2(const U& other): Vector<2, T>(Implementation::VectorConverter<2, T, U>::from(other)) {}
+        #endif
 
         /** @brief Copy constructor */
         constexpr Vector2(const Vector<2, T>& other): Vector<2, T>(other) {}
@@ -142,6 +146,15 @@ template<class T> class Vector2: public Vector<2, T> {
          * @f]
          */
         T aspectRatio() const { return x()/y(); }
+
+        /**
+         * @brief Minimum and maximum value
+         *
+         * @see @ref min(), @ref max(), @ref Math::minmax()
+         */
+        std::pair<T, T> minmax() const {
+            return x() < y() ? std::make_pair(x(), y()) : std::make_pair(y(), x());
+        }
 
         MAGNUM_VECTOR_SUBCLASS_IMPLEMENTATION(2, Vector2)
 };

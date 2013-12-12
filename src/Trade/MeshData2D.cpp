@@ -32,11 +32,19 @@ MeshData2D::MeshData2D(Mesh::Primitive primitive, std::vector<UnsignedInt> indic
     CORRADE_ASSERT(!_positions.empty(), "Trade::MeshData2D: no position array specified", );
 }
 
-MeshData2D::MeshData2D(MeshData2D&&) = default;
+/* GCC 4.4 doesn't like it defaulted */
+MeshData2D::MeshData2D(MeshData2D&& other): _primitive(other._primitive), _indices(std::move(other._indices)), _positions(std::move(other._positions)), _textureCoords2D(std::move(other._textureCoords2D)) {}
 
 MeshData2D::~MeshData2D() = default;
 
-MeshData2D& MeshData2D::operator=(MeshData2D&&) = default;
+/* GCC 4.5 doesn't like it defaulted */
+MeshData2D& MeshData2D::operator=(MeshData2D&& other) {
+    std::swap(_primitive, other._primitive);
+    std::swap(_indices, other._indices);
+    std::swap(_positions, other._positions);
+    std::swap(_textureCoords2D, other._textureCoords2D);
+    return *this;
+}
 
 std::vector<UnsignedInt>& MeshData2D::indices() {
     CORRADE_ASSERT(isIndexed(), "Trade::MeshData2D::indices(): the mesh is not indexed", _indices);

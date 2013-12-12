@@ -24,6 +24,7 @@
 
 #include "Shader.h"
 
+#include <algorithm> /* std::max(), needed by MSVC */
 #include <fstream>
 #include <Containers/Array.h>
 #include <Utility/Assert.h>
@@ -591,8 +592,13 @@ Shader& Shader::addSource(std::string source) {
         /* Fix line numbers, so line 41 of third added file is marked as 3(41).
            Source 0 is the #version string added in constructor. */
         sources.push_back("#line 1 " +
+            /* This shouldn't be ambiguous. But is. */
             #if !defined(CORRADE_TARGET_NACL_NEWLIB) && !defined(__MINGW32__)
+            #ifndef CORRADE_GCC44_COMPATIBILITY
             std::to_string((sources.size()+1)/2) +
+            #else
+            std::to_string(static_cast<unsigned long long int>(sources.size()+1)/2) +
+            #endif
             #else
             converter.str() +
             #endif
@@ -605,12 +611,12 @@ Shader& Shader::addSource(std::string source) {
 
 Shader& Shader::addFile(const std::string& filename) {
     /* Open file */
-    std::ifstream file(filename.c_str());
+    std::ifstream file(filename);
     CORRADE_ASSERT(file.good(), "Shader file " << '\'' + filename + '\'' << " cannot be opened.", *this);
 
     /* Get size of shader and initialize buffer */
     file.seekg(0, std::ios::end);
-    std::string source(file.tellg(), '\0');
+    std::string source(std::size_t(file.tellg()), '\0');
 
     /* Read data, close */
     file.seekg(0, std::ios::beg);
@@ -627,7 +633,7 @@ bool Shader::compile() {
     CORRADE_ASSERT(sources.size() > 1, "Shader::compile(): no files added", false);
 
     /* Array of source string pointers and their lengths */
-    /** @todo Use `Containers::::ArrayTuple` to avoid one allocation if it ever
+    /** @todo Use `Containers::ArrayTuple` to avoid one allocation if it ever
         gets to be implemented (we need properly aligned memory too) */
     Containers::Array<const GLchar*> pointers(sources.size());
     Containers::Array<GLint> sizes(sources.size());

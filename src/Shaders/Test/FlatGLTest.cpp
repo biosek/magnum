@@ -25,11 +25,15 @@
 #include "Shaders/Flat.h"
 #include "Test/AbstractOpenGLTester.h"
 
+#ifdef MAGNUM_BUILD_STATIC
+#include "Shaders/magnumShadersResourceImport.hpp"
+#endif
+
 namespace Magnum { namespace Shaders { namespace Test {
 
-class FlatTest: public Magnum::Test::AbstractOpenGLTester {
+class FlatGLTest: public Magnum::Test::AbstractOpenGLTester {
     public:
-        explicit FlatTest();
+        explicit FlatGLTest();
 
         void compile2D();
         void compile3D();
@@ -37,33 +41,33 @@ class FlatTest: public Magnum::Test::AbstractOpenGLTester {
         void compile3DTextured();
 };
 
-FlatTest::FlatTest() {
-    addTests({&FlatTest::compile2D,
-              &FlatTest::compile3D,
-              &FlatTest::compile2DTextured,
-              &FlatTest::compile3DTextured});
+FlatGLTest::FlatGLTest() {
+    addTests({&FlatGLTest::compile2D,
+              &FlatGLTest::compile3D,
+              &FlatGLTest::compile2DTextured,
+              &FlatGLTest::compile3DTextured});
 }
 
-void FlatTest::compile2D() {
+void FlatGLTest::compile2D() {
     Shaders::Flat2D shader;
     CORRADE_VERIFY(shader.validate().first);
 }
 
-void FlatTest::compile3D() {
+void FlatGLTest::compile3D() {
     Shaders::Flat3D shader;
     CORRADE_VERIFY(shader.validate().first);
 }
 
-void FlatTest::compile2DTextured() {
+void FlatGLTest::compile2DTextured() {
     Shaders::Flat2D shader(Shaders::Flat2D::Flag::Textured);
     CORRADE_VERIFY(shader.validate().first);
 }
 
-void FlatTest::compile3DTextured() {
+void FlatGLTest::compile3DTextured() {
     Shaders::Flat3D shader(Shaders::Flat3D::Flag::Textured);
     CORRADE_VERIFY(shader.validate().first);
 }
 
 }}}
 
-CORRADE_TEST_MAIN(Magnum::Shaders::Test::FlatTest)
+CORRADE_TEST_MAIN(Magnum::Shaders::Test::FlatGLTest)

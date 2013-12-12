@@ -39,7 +39,7 @@ namespace Magnum { namespace SceneGraph {
 */
 template<class T> class AbstractBasicTranslationRotationScaling3D: public AbstractBasicTranslationRotation3D<T> {
     public:
-        explicit AbstractBasicTranslationRotationScaling3D() = default;
+        explicit AbstractBasicTranslationRotationScaling3D();
 
         /**
          * @brief Scale object
@@ -83,7 +83,7 @@ template<class T> class AbstractBasicTranslationRotationScaling3D: public Abstra
         #endif
 
     protected:
-        ~AbstractBasicTranslationRotationScaling3D() = default;
+        ~AbstractBasicTranslationRotationScaling3D();
 
     #ifdef DOXYGEN_GENERATING_OUTPUT
     protected:
@@ -93,6 +93,9 @@ template<class T> class AbstractBasicTranslationRotationScaling3D: public Abstra
         /** @brief Polymorphic implementation for scale() */
         virtual void doScale(const Math::Vector3<T>& vector, TransformationType type) = 0;
 };
+
+template<class T> inline AbstractBasicTranslationRotationScaling3D<T>::AbstractBasicTranslationRotationScaling3D() = default;
+template<class T> inline AbstractBasicTranslationRotationScaling3D<T>::~AbstractBasicTranslationRotationScaling3D() = default;
 
 /**
 @brief Base transformation for three-dimensional float scenes supporting translation, rotation and scaling

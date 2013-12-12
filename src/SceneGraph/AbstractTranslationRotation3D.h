@@ -40,7 +40,7 @@ namespace Magnum { namespace SceneGraph {
 */
 template<class T> class AbstractBasicTranslationRotation3D: public AbstractTranslation<3, T> {
     public:
-        explicit AbstractBasicTranslationRotation3D() = default;
+        explicit AbstractBasicTranslationRotation3D();
 
         /**
          * @brief Rotate object
@@ -108,7 +108,7 @@ template<class T> class AbstractBasicTranslationRotation3D: public AbstractTrans
         #endif
 
     protected:
-        ~AbstractBasicTranslationRotation3D() = default;
+        ~AbstractBasicTranslationRotation3D();
 
     #ifdef DOXYGEN_GENERATING_OUTPUT
     protected:
@@ -145,6 +145,9 @@ template<class T> class AbstractBasicTranslationRotation3D: public AbstractTrans
             rotate(angle, Math::Vector3<T>::zAxis(), type);
         }
 };
+
+template<class T> inline AbstractBasicTranslationRotation3D<T>::AbstractBasicTranslationRotation3D() = default;
+template<class T> inline AbstractBasicTranslationRotation3D<T>::~AbstractBasicTranslationRotation3D() = default;
 
 /**
 @brief Base transformation for three-dimensional float scenes supporting translation and rotation

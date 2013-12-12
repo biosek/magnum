@@ -30,11 +30,19 @@ ObjectData2D::ObjectData2D(std::vector<UnsignedInt> children, const Matrix3& tra
 
 ObjectData2D::ObjectData2D(std::vector<UnsignedInt> children, const Matrix3& transformation): _children(std::move(children)), _transformation(transformation), _instanceType(ObjectInstanceType2D::Empty), _instance(-1) {}
 
-ObjectData2D::ObjectData2D(ObjectData2D&&) = default;
+/* GCC 4.4 doesn't like it defaulted */
+ObjectData2D::ObjectData2D(ObjectData2D&& other): _children(std::move(other._children)), _transformation(std::move(other._transformation)), _instanceType(std::move(other._instanceType)), _instance(std::move(other._instance)) {}
 
 ObjectData2D::~ObjectData2D() = default;
 
-ObjectData2D& ObjectData2D::operator=(ObjectData2D&&) = default;
+/* GCC 4.5 doesn't like it defaulted */
+ObjectData2D& ObjectData2D::operator=(ObjectData2D&& other) {
+    std::swap(_children, other._children);
+    std::swap(_transformation, other._transformation);
+    std::swap(_instanceType, other._instanceType);
+    std::swap(_instance, other._instance);
+    return *this;
+}
 
 #ifndef DOXYGEN_GENERATING_OUTPUT
 Debug operator<<(Debug debug, ObjectInstanceType2D value) {

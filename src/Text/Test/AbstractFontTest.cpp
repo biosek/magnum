@@ -41,7 +41,7 @@ class AbstractFontTest: public TestSuite::Tester {
 };
 
 AbstractFontTest::AbstractFontTest() {
-    addTests({&AbstractFontTest::openSingleData,
+    addTests<AbstractFontTest>({&AbstractFontTest::openSingleData,
               &AbstractFontTest::openFile});
 }
 
@@ -65,7 +65,7 @@ class SingleDataFont: public Text::AbstractFont {
         Vector2 doGlyphAdvance(UnsignedInt) override { return {}; }
 
         std::unique_ptr<AbstractLayouter> doLayout(const GlyphCache&, Float, const std::string&) override {
-            return nullptr;
+            return {};
         }
 
         bool opened;
@@ -78,7 +78,7 @@ void AbstractFontTest::openSingleData() {
     SingleDataFont font;
     const unsigned char data[] = {0xa5};
     CORRADE_VERIFY(!font.isOpened());
-    font.openData({{{}, data}}, 3.0f);
+    font.openData(std::vector<std::pair<std::string, Containers::ArrayReference<const unsigned char>>>{{{}, data}}, 3.0f);
     CORRADE_VERIFY(font.isOpened());
 }
 

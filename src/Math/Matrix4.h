@@ -161,7 +161,7 @@ template<class T> class Matrix4: public Matrix<4, T> {
          * @see orthographicProjection(), Matrix3::projection()
          */
         static Matrix4<T> perspectiveProjection(Rad<T> fov, T aspectRatio, T near, T far) {
-            const T xyScale = 2*std::tan(T(fov)/2)*near;
+            const T xyScale = 2*std::tan(fov.toUnderlyingType()/2)*near;
             return perspectiveProjection(Vector2<T>(xyScale, xyScale/aspectRatio), near, far);
         }
 
@@ -206,7 +206,11 @@ template<class T> class Matrix4: public Matrix<4, T> {
         template<class U> constexpr explicit Matrix4(const RectangularMatrix<4, 4, U>& other): Matrix<4, T>(other) {}
 
         /** @brief Construct matrix from external representation */
+        #ifndef CORRADE_GCC44_COMPATIBILITY
         template<class U, class V = decltype(Implementation::RectangularMatrixConverter<4, 4, T, U>::from(std::declval<U>()))> constexpr explicit Matrix4(const U& other): Matrix<4, T>(Implementation::RectangularMatrixConverter<4, 4, T, U>::from(other)) {}
+        #else
+        template<class U, class V = decltype(Implementation::RectangularMatrixConverter<4, 4, T, U>::from(*static_cast<const U*>(nullptr)))> constexpr explicit Matrix4(const U& other): Matrix<4, T>(Implementation::RectangularMatrixConverter<4, 4, T, U>::from(other)) {}
+        #endif
 
         /** @brief Copy constructor */
         constexpr Matrix4(const RectangularMatrix<4, 4, T>& other): Matrix<4, T>(other) {}
@@ -350,7 +354,13 @@ template<class T> class Matrix4: public Matrix<4, T> {
          * @todo extract 3x3 matrix and multiply directly? (benchmark that)
          */
         Vector3<T> transformVector(const Vector3<T>& vector) const {
+            /* Workaround for GCC 4.4 strict-aliasing fascism */
+            #ifndef CORRADE_GCC44_COMPATIBILITY
             return ((*this)*Vector4<T>(vector, T(0))).xyz();
+            #else
+            const auto v = (*this)*Vector4<T>(vector, T(0));
+            return v.xyz();
+            #endif
         }
 
         /**
@@ -363,7 +373,13 @@ template<class T> class Matrix4: public Matrix<4, T> {
          * @see DualQuaternion::transformPoint(), Matrix3::transformPoint()
          */
         Vector3<T> transformPoint(const Vector3<T>& vector) const {
+            /* Workaround for GCC 4.4 strict-aliasing fascism */
+            #ifndef CORRADE_GCC44_COMPATIBILITY
             return ((*this)*Vector4<T>(vector, T(1))).xyz();
+            #else
+            const auto v = (*this)*Vector4<T>(vector, T(1));
+            return v.xyz();
+            #endif
         }
 
         MAGNUM_RECTANGULARMATRIX_SUBCLASS_IMPLEMENTATION(4, 4, Matrix4<T>)
@@ -381,8 +397,8 @@ template<class T> Matrix4<T> Matrix4<T>::rotation(const Rad<T> angle, const Vect
     CORRADE_ASSERT(normalizedAxis.isNormalized(),
                    "Math::Matrix4::rotation(): axis must be normalized", {});
 
-    const T sine = std::sin(T(angle));
-    const T cosine = std::cos(T(angle));
+    const T sine = std::sin(angle.toUnderlyingType());
+    const T cosine = std::cos(angle.toUnderlyingType());
     const T oneMinusCosine = T(1) - cosine;
 
     const T xx = normalizedAxis.x()*normalizedAxis.x();
@@ -410,8 +426,8 @@ template<class T> Matrix4<T> Matrix4<T>::rotation(const Rad<T> angle, const Vect
 }
 
 template<class T> Matrix4<T> Matrix4<T>::rotationX(const Rad<T> angle) {
-    const T sine = std::sin(T(angle));
-    const T cosine = std::cos(T(angle));
+    const T sine = std::sin(angle.toUnderlyingType());
+    const T cosine = std::cos(angle.toUnderlyingType());
 
     return {{T(1),   T(0),   T(0), T(0)},
             {T(0), cosine,   sine, T(0)},
@@ -420,8 +436,8 @@ template<class T> Matrix4<T> Matrix4<T>::rotationX(const Rad<T> angle) {
 }
 
 template<class T> Matrix4<T> Matrix4<T>::rotationY(const Rad<T> angle) {
-    const T sine = std::sin(T(angle));
-    const T cosine = std::cos(T(angle));
+    const T sine = std::sin(angle.toUnderlyingType());
+    const T cosine = std::cos(angle.toUnderlyingType());
 
     return {{cosine, T(0),  -sine, T(0)},
             {  T(0), T(1),   T(0), T(0)},
@@ -430,8 +446,8 @@ template<class T> Matrix4<T> Matrix4<T>::rotationY(const Rad<T> angle) {
 }
 
 template<class T> Matrix4<T> Matrix4<T>::rotationZ(const Rad<T> angle) {
-    const T sine = std::sin(T(angle));
-    const T cosine = std::cos(T(angle));
+    const T sine = std::sin(angle.toUnderlyingType());
+    const T cosine = std::cos(angle.toUnderlyingType());
 
     return {{cosine,   sine, T(0), T(0)},
             { -sine, cosine, T(0), T(0)},

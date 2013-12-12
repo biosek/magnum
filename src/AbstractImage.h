@@ -33,6 +33,10 @@
 #include "Magnum.h"
 #include "magnumVisibility.h"
 
+#ifdef CORRADE_GCC45_COMPATIBILITY
+#include "ColorFormat.h"
+#endif
+
 namespace Magnum {
 
 /**
@@ -77,7 +81,13 @@ class MAGNUM_EXPORT AbstractImage {
          */
         constexpr explicit AbstractImage(ColorFormat format, ColorType type): _format(format), _type(type) {}
 
+        /* GCC > 4.5 needs to have `= default` in class body, otherwise can't
+           use constexpr */
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         ~AbstractImage() = default;
+        #else
+        ~AbstractImage();
+        #endif
 
     #ifdef DOXYGEN_GENERATING_OUTPUT
     private:
@@ -87,6 +97,11 @@ class MAGNUM_EXPORT AbstractImage {
         ColorFormat _format;
         ColorType _type;
 };
+
+#ifdef CORRADE_GCC45_COMPATIBILITY
+/* GCC 4.5 doesn't take `= default` as inline */
+inline AbstractImage::~AbstractImage() = default;
+#endif
 
 }
 

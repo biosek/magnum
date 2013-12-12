@@ -114,7 +114,11 @@ class GlutApplication {
          * Unlike above, the context is not created and must be created later
          * with createContext() or tryCreateContext().
          */
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         explicit GlutApplication(const Arguments& arguments, std::nullptr_t);
+        #else
+        explicit GlutApplication(const Arguments& arguments, void*);
+        #endif
 
         /**
          * @brief Execute main loop
@@ -386,11 +390,19 @@ class GlutApplication::InputEvent {
     protected:
         constexpr InputEvent(): _accepted(false) {}
 
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         ~InputEvent() = default;
+        #else
+        ~InputEvent();
+        #endif
 
     private:
         bool _accepted;
 };
+
+#ifdef CORRADE_GCC45_COMPATIBILITY
+GlutApplication::InputEvent::~InputEvent() = default;
+#endif
 
 /**
 @brief Key event

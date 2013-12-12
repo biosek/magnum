@@ -364,13 +364,15 @@ Context::Context() {
        previous versions should be supported automatically, so we don't need
        to check for them) */
     std::unordered_map<std::string, Extension> futureExtensions;
-    for(std::size_t i = future; i != versions.size(); ++i)
-        for(const Extension& extension: Extension::extensions(versions[i]))
+    for(std::size_t i = future; i != versions.size(); ++i) {
+        const std::vector<Extension>& extensions = Extension::extensions(versions[i]);
+        for(auto it = extensions.begin(); it != extensions.end(); ++it)
             #ifndef CORRADE_GCC46_COMPATIBILITY
-            futureExtensions.emplace(extension._string, extension);
+            futureExtensions.emplace(it->_string, *it);
             #else
-            futureExtensions.insert({extension._string, extension});
+            futureExtensions.insert({it->_string, *it});
             #endif
+    }
 
     /* Check for presence of extensions in future versions */
     #ifndef MAGNUM_TARGET_GLES2
@@ -402,8 +404,8 @@ Context::Context() {
         const char* e = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
         if(e) {
             std::vector<std::string> extensions = Utility::String::split(e, ' ');
-            for(const std::string& extension: extensions) {
-                auto found = futureExtensions.find(extension);
+            for(auto it = extensions.begin(); it != extensions.end(); ++it) {
+                auto found = futureExtensions.find(*it);
                 if(found != futureExtensions.end()) {
                     _supportedExtensions.push_back(found->second);
                     extensionStatus.set(found->second._index);
@@ -463,8 +465,8 @@ std::vector<std::string> Context::shadingLanguageVersionStrings() const {
 }
 
 Version Context::supportedVersion(std::initializer_list<Version> versions) const {
-    for(auto version: versions)
-        if(isVersionSupported(version)) return version;
+    for(auto it = versions.begin(); it != versions.end(); ++it)
+        if(isVersionSupported(*it)) return *it;
 
     #ifndef MAGNUM_TARGET_GLES
     return Version::GL210;

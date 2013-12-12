@@ -110,6 +110,10 @@ class TranslationTransformation: public AbstractTranslation<dimensions, T, Trans
             return static_cast<Object<TranslationTransformation<dimensions, T, TranslationType>>&>(*this);
         }
 
+    protected:
+        /* Allow construction only from Object */
+        explicit TranslationTransformation();
+
     private:
         void doResetTransformation() override final { resetTransformation(); }
 
@@ -119,6 +123,8 @@ class TranslationTransformation: public AbstractTranslation<dimensions, T, Trans
 
         typename DimensionTraits<dimensions, TranslationType>::VectorType _transformation;
 };
+
+template<UnsignedInt dimensions, class T, class TranslationType> inline TranslationTransformation<dimensions, T, TranslationType>::TranslationTransformation() = default;
 
 #ifndef CORRADE_GCC46_COMPATIBILITY
 /**
@@ -130,12 +136,14 @@ See @ref TranslationTransformation for more information.
     instead.
 @see @ref TranslationTransformation2D, @ref BasicTranslationTransformation3D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T, class TranslationType = T>
 #else
 template<class T, class TranslationType>
 #endif
 using BasicTranslationTransformation2D = TranslationTransformation<2, T, TranslationType>;
+#endif
 #endif
 
 /**
@@ -159,12 +167,14 @@ See @ref TranslationTransformation for more information.
     instead.
 @see @ref TranslationTransformation3D, @ref BasicTranslationTransformation2D
 */
+#ifndef CORRADE_MSVC2013_COMPATIBILITY /* Apparently cannot have multiply defined aliases */
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T, class TranslationType = T>
 #else
 template<class T, class TranslationType>
 #endif
 using BasicTranslationTransformation3D = TranslationTransformation<3, T, TranslationType>;
+#endif
 #endif
 
 /**
@@ -201,6 +211,11 @@ template<UnsignedInt dimensions, class T, class TranslationType> struct Transfor
 };
 
 }
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT Object<TranslationTransformation<2, Float>>;
+extern template class MAGNUM_SCENEGRAPH_EXPORT Object<TranslationTransformation<3, Float>>;
+#endif
 
 }}
 

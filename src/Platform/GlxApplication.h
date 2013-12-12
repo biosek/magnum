@@ -70,7 +70,11 @@ class GlxApplication: public AbstractXApplication {
         explicit GlxApplication(const Arguments& arguments, const Configuration& configuration = Configuration());
 
         /** @copydoc GlutApplication::GlutApplication(const Arguments&, std::nullptr_t) */
+        #ifndef CORRADE_GCC45_COMPATIBILITY
         explicit GlxApplication(const Arguments& arguments, std::nullptr_t);
+        #else
+        explicit GlxApplication(const Arguments& arguments, void*);
+        #endif
 
     protected:
         /* Nobody will need to have (and delete) GlxApplication*, thus this is

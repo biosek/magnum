@@ -177,7 +177,7 @@ template<class T> class BasicRigidMatrixTransformation3D: public AbstractBasicTr
 
     protected:
         /* Allow construction only from Object */
-        explicit BasicRigidMatrixTransformation3D() = default;
+        explicit BasicRigidMatrixTransformation3D();
 
     private:
         void doResetTransformation() override final { resetTransformation(); }
@@ -224,6 +224,8 @@ template<class T> class BasicRigidMatrixTransformation3D: public AbstractBasicTr
         Math::Matrix4<T> _transformation;
 };
 
+template<class T> inline BasicRigidMatrixTransformation3D<T>::BasicRigidMatrixTransformation3D() = default;
+
 /**
 @brief Three-dimensional rigid transformation for float scenes implemented using matrices
 
@@ -254,6 +256,10 @@ template<class T> struct Transformation<BasicRigidMatrixTransformation3D<T>> {
 };
 
 }
+
+#ifdef _WIN32
+extern template class MAGNUM_SCENEGRAPH_EXPORT Object<BasicRigidMatrixTransformation3D<Float>>;
+#endif
 
 }}
 

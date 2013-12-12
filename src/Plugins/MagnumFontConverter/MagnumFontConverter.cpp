@@ -62,28 +62,32 @@ std::vector<std::pair<std::string, Containers::Array<unsigned char>>> MagnumFont
     /* Compress glyph IDs so the glyphs are in consecutive array, glyph 0
        should stay at position 0 */
     std::unordered_map<UnsignedInt, UnsignedInt> glyphIdMap;
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     glyphIdMap.reserve(cache.glyphCount());
+    #endif
     #ifndef CORRADE_GCC46_COMPATIBILITY
     glyphIdMap.emplace(0, 0);
     #else
     glyphIdMap.insert({0, 0});
     #endif
-    for(const std::pair<UnsignedInt, std::pair<Vector2i, Rectanglei>>& glyph: cache)
+    for(auto it = cache.begin(); it != cache.end(); ++it)
         #ifndef CORRADE_GCC46_COMPATIBILITY
-        glyphIdMap.emplace(glyph.first, glyphIdMap.size());
+        glyphIdMap.emplace(it->first, glyphIdMap.size());
         #else
-        glyphIdMap.insert({glyph.first, glyphIdMap.size()});
+        glyphIdMap.insert({it->first, glyphIdMap.size()});
         #endif
 
     /** @todo Save only glyphs contained in @p characters */
 
     /* Inverse map from new glyph IDs to old ones */
     std::vector<UnsignedInt> inverseGlyphIdMap(glyphIdMap.size());
-    for(const std::pair<UnsignedInt, UnsignedInt>& map: glyphIdMap)
-        inverseGlyphIdMap[map.second] = map.first;
+    for(auto it = glyphIdMap.begin(); it != glyphIdMap.end(); ++it)
+        inverseGlyphIdMap[it->second] = it->first;
 
     /* Character->glyph map, map glyph IDs to new ones */
-    for(const char32_t c: characters) {
+    for(auto it = characters.begin(); it != characters.end(); ++it) {
+        const char32_t c = *it;
+
         Utility::ConfigurationGroup* group = configuration.addGroup("char");
         const UnsignedInt glyphId = font.glyphId(c);
         group->setValue("unicode", c);
@@ -96,13 +100,14 @@ std::vector<std::pair<std::string, Containers::Array<unsigned char>>> MagnumFont
     /* Save glyph properties in order which preserves their IDs, remove padding
        from the values so they aren't added twice when using the font later */
     /** @todo Some better way to handle this padding stuff */
-    for(UnsignedInt oldGlyphId: inverseGlyphIdMap) {
-        std::pair<Vector2i, Rectanglei> glyph = cache[oldGlyphId];
+    for(auto it = inverseGlyphIdMap.begin(); it != inverseGlyphIdMap.end(); ++it) {
+        const UnsignedInt oldGlyphId = *it;
+
+        std::pair<Vector2i, Range2Di> glyph = cache[oldGlyphId];
         Utility::ConfigurationGroup* group = configuration.addGroup("glyph");
         group->setValue("advance", font.glyphAdvance(oldGlyphId));
         group->setValue("position", glyph.first+cache.padding());
-        group->setValue("rectangle", Rectanglei(glyph.second.bottomLeft()+cache.padding(),
-                                                glyph.second.topRight()-cache.padding()));
+        group->setValue("rectangle", glyph.second.padded(-cache.padding()));
     }
 
     std::ostringstream confOut;

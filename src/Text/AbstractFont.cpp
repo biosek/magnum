@@ -94,7 +94,7 @@ std::pair<Float, Float> AbstractFont::doOpenFile(const std::string& filename, co
 
     /* Create array to hold file contents */
     in.seekg(0, std::ios::end);
-    Containers::Array<unsigned char> data(in.tellg());
+    Containers::Array<unsigned char> data(std::size_t(in.tellg()));
 
     /* Read data, close */
     in.seekg(0, std::ios::beg);
@@ -145,19 +145,19 @@ void AbstractFont::doFillGlyphCache(GlyphCache&, const std::vector<char32_t>&)
 
 std::unique_ptr<GlyphCache> AbstractFont::createGlyphCache() {
     CORRADE_ASSERT(isOpened(),
-        "Text::AbstractFont::createGlyphCache(): no font opened", nullptr);
+        "Text::AbstractFont::createGlyphCache(): no font opened", {});
     CORRADE_ASSERT(features() & Feature::PreparedGlyphCache,
-        "Text::AbstractFont::createGlyphCache(): feature not supported", nullptr);
+        "Text::AbstractFont::createGlyphCache(): feature not supported", {});
 
     return doCreateGlyphCache();
 }
 
 std::unique_ptr<GlyphCache> AbstractFont::doCreateGlyphCache() {
-    CORRADE_ASSERT(false, "Text::AbstractFont::createGlyphCache(): feature advertised but not implemented", nullptr);
+    CORRADE_ASSERT(false, "Text::AbstractFont::createGlyphCache(): feature advertised but not implemented", {});
 }
 
 std::unique_ptr<AbstractLayouter> AbstractFont::layout(const GlyphCache& cache, const Float size, const std::string& text) {
-    CORRADE_ASSERT(isOpened(), "Text::AbstractFont::layout(): no font opened", nullptr);
+    CORRADE_ASSERT(isOpened(), "Text::AbstractFont::layout(): no font opened", {});
 
     return doLayout(cache, size, text);
 }
@@ -166,11 +166,11 @@ AbstractLayouter::AbstractLayouter(UnsignedInt glyphCount): _glyphCount(glyphCou
 
 AbstractLayouter::~AbstractLayouter() {}
 
-std::pair<Rectangle, Rectangle> AbstractLayouter::renderGlyph(const UnsignedInt i, Vector2& cursorPosition, Rectangle& rectangle) {
+std::pair<Range2D, Range2D> AbstractLayouter::renderGlyph(const UnsignedInt i, Vector2& cursorPosition, Range2D& rectangle) {
     CORRADE_ASSERT(i < glyphCount(), "Text::AbstractLayouter::renderGlyph(): glyph index out of bounds", {});
 
     /* Render the glyph */
-    Rectangle quadPosition, textureCoordinates;
+    Range2D quadPosition, textureCoordinates;
     Vector2 advance;
     std::tie(quadPosition, textureCoordinates, advance) = doRenderGlyph(i);
 

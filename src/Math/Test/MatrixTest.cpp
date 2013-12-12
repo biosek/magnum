@@ -91,7 +91,7 @@ typedef Vector<3, Float> Vector3;
 typedef Math::Constants<Float> Constants;
 
 MatrixTest::MatrixTest() {
-    addTests({&MatrixTest::construct,
+    addTests<MatrixTest>({&MatrixTest::construct,
               &MatrixTest::constructIdentity,
               &MatrixTest::constructZero,
               &MatrixTest::constructConversion,
@@ -115,10 +115,18 @@ MatrixTest::MatrixTest() {
 }
 
 void MatrixTest::construct() {
+    #ifndef CORRADE_GCC44_COMPATIBILITY
     constexpr Matrix4x4 a = {Vector4(3.0f,  5.0f, 8.0f, -3.0f),
                              Vector4(4.5f,  4.0f, 7.0f,  2.0f),
                              Vector4(1.0f,  2.0f, 3.0f, -1.0f),
                              Vector4(7.9f, -1.0f, 8.0f, -1.5f)};
+    #else
+    /* Ambiguity with default copy constructor */
+    constexpr Matrix4x4 a(Vector4(3.0f,  5.0f, 8.0f, -3.0f),
+                          Vector4(4.5f,  4.0f, 7.0f,  2.0f),
+                          Vector4(1.0f,  2.0f, 3.0f, -1.0f),
+                          Vector4(7.9f, -1.0f, 8.0f, -1.5f));
+    #endif
     CORRADE_COMPARE(a, Matrix4x4(Vector4(3.0f,  5.0f, 8.0f, -3.0f),
                                  Vector4(4.5f,  4.0f, 7.0f,  2.0f),
                                  Vector4(1.0f,  2.0f, 3.0f, -1.0f),
@@ -203,7 +211,12 @@ void MatrixTest::convert() {
 
     /* Implicit conversion is not allowed */
     CORRADE_VERIFY(!(std::is_convertible<Mat3, Matrix3x3>::value));
-    CORRADE_VERIFY(!(std::is_convertible<Matrix3x3, Mat3>::value));
+    {
+        #ifdef CORRADE_GCC44_COMPATIBILITY
+        CORRADE_EXPECT_FAIL("GCC 4.4 doesn't have explicit conversion operators");
+        #endif
+        CORRADE_VERIFY(!(std::is_convertible<Matrix3x3, Mat3>::value));
+    }
 }
 
 void MatrixTest::isOrthogonal() {
@@ -288,12 +301,14 @@ void MatrixTest::invertedOrthogonal() {
 
 template<class T> class BasicVec2: public Math::Vector<2, T> {
     public:
-        template<class ...U> BasicVec2(U&&... args): Math::Vector<2, T>{std::forward<U>(args)...} {}
+        /* MSVC 2013 can't cope with {} here */
+        template<class ...U> BasicVec2(U&&... args): Math::Vector<2, T>(std::forward<U>(args)...) {}
 };
 
 template<class T> class BasicMat2: public Math::Matrix<2, T> {
     public:
-        template<class ...U> BasicMat2(U&&... args): Math::Matrix<2, T>{std::forward<U>(args)...} {}
+        /* MSVC 2013 can't cope with {} here */
+        template<class ...U> BasicMat2(U&&... args): Math::Matrix<2, T>(std::forward<U>(args)...) {}
 
         MAGNUM_MATRIX_SUBCLASS_IMPLEMENTATION(2, BasicMat2, BasicVec2)
 };

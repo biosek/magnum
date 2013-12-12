@@ -25,8 +25,10 @@
 */
 
 #include <cmath>
-#include <type_traits>
+#include <algorithm> /* std::max(), needed by MSVC */
 #include <limits>
+#include <type_traits>
+#include <utility>
 
 #include "Math/Vector.h"
 
@@ -84,7 +86,7 @@ UnsignedInt MAGNUM_EXPORT log(UnsignedInt base, UnsignedInt number);
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T> inline T sin(Rad<T> angle);
 #else
-template<class T> inline T sin(Unit<Rad, T> angle) { return std::sin(T(angle)); }
+template<class T> inline T sin(Unit<Rad, T> angle) { return std::sin(angle.toUnderlyingType()); }
 template<class T> inline T sin(Unit<Deg, T> angle) { return sin(Rad<T>(angle)); }
 #endif
 
@@ -92,7 +94,7 @@ template<class T> inline T sin(Unit<Deg, T> angle) { return sin(Rad<T>(angle)); 
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T> inline T cos(Rad<T> angle);
 #else
-template<class T> inline T cos(Unit<Rad, T> angle) { return std::cos(T(angle)); }
+template<class T> inline T cos(Unit<Rad, T> angle) { return std::cos(angle.toUnderlyingType()); }
 template<class T> inline T cos(Unit<Deg, T> angle) { return cos(Rad<T>(angle)); }
 #endif
 
@@ -100,7 +102,7 @@ template<class T> inline T cos(Unit<Deg, T> angle) { return cos(Rad<T>(angle)); 
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T> inline T tan(Rad<T> angle);
 #else
-template<class T> inline T tan(Unit<Rad, T> angle) { return std::tan(T(angle)); }
+template<class T> inline T tan(Unit<Rad, T> angle) { return std::tan(angle.toUnderlyingType()); }
 template<class T> inline T tan(Unit<Deg, T> angle) { return tan(Rad<T>(angle)); }
 #endif
 
@@ -124,7 +126,7 @@ perform the operations component-wise.
 /**
 @brief Minimum
 
-@see min(), clamp(), Vector::min()
+@see @ref max(), @ref minmax(), @ref clamp(), @ref Vector::min()
 */
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T> inline T min(T a, T b);
@@ -151,7 +153,7 @@ template<class T> inline T min(std::initializer_list<T> list) {
 /**
 @brief Maximum
 
-@see max(), clamp(), Vector::max()
+@see @ref min(), @ref minmax(), @ref clamp(), @ref Vector::max()
 */
 #ifdef DOXYGEN_GENERATING_OUTPUT
 template<class T> inline T max(const T& a, const T& b);
@@ -174,6 +176,25 @@ template<class T> inline T max(std::initializer_list<T> list) {
         out = max(out, *it);
     return out;
 }
+
+/**
+@brief Minimum and maximum of two values
+
+@see @ref min(), @ref max(), @ref clamp(), @ref Vector2::minmax()
+*/
+#ifdef DOXYGEN_GENERATING_OUTPUT
+template<class T> inline std::pair<T, T> minmax(const T& a, const T& b);
+#else
+template<class T> inline typename std::enable_if<std::is_arithmetic<T>::value, std::pair<T, T>>::type minmax(T a, T b) {
+    return a < b ? std::make_pair(a, b) : std::make_pair(b, a);
+}
+template<std::size_t size, class T> std::pair<Vector<size, T>, Vector<size, T>> minmax(const Vector<size, T>& a, const Vector<size, T>& b) {
+    std::pair<Vector<size, T>, Vector<size, T>> out{a, b};
+    for(std::size_t i = 0; i != size; ++i)
+        if(out.first[i] > out.second[i]) std::swap(out.first[i], out.second[i]);
+    return out;
+}
+#endif
 
 /**
 @brief Sign
@@ -265,12 +286,12 @@ template<std::size_t size, class T> Vector<size, T> ceil(const Vector<size, T>& 
 template<class T> inline T sqrt(const T& a);
 #else
 template<class T> inline typename std::enable_if<std::is_arithmetic<T>::value, T>::type sqrt(T a) {
-    return std::sqrt(a);
+    return T(std::sqrt(a));
 }
 template<std::size_t size, class T> Vector<size, T> sqrt(const Vector<size, T>& a) {
     Vector<size, T> out;
     for(std::size_t i = 0; i != size; ++i)
-        out[i] = std::sqrt(a[i]);
+        out[i] = T(std::sqrt(a[i]));
     return out;
 }
 #endif
@@ -329,7 +350,7 @@ The interpolation for vectors is done as in following, similarly for scalars: @f
 template<class T, class U> inline T lerp(const T& a, const T& b, U t);
 #else
 template<class T, class U> inline T lerp(T a, T b, U t) {
-    return (U(1) - t)*a + t*b;
+    return T((U(1) - t)*a + t*b);
 }
 template<std::size_t size, class T, class U> inline Vector<size, T> lerp(const Vector<size, T>& a, const Vector<size, T>& b, U t) {
     return (U(1) - t)*a + t*b;
@@ -451,7 +472,7 @@ template<class Integral, class FloatingPoint> inline Integral denormalize(const 
 template<class Integral, class FloatingPoint> inline typename std::enable_if<std::is_arithmetic<FloatingPoint>::value, Integral>::type denormalize(FloatingPoint value) {
     static_assert(std::is_floating_point<FloatingPoint>::value && std::is_integral<Integral>::value,
                   "Math::denormalize(): denormalization must be done from floating-point to integral type");
-    return value*std::numeric_limits<Integral>::max();
+    return Integral(value*std::numeric_limits<Integral>::max());
 }
 template<class Integral, class FloatingPoint> inline typename std::enable_if<std::is_arithmetic<typename Integral::Type>::value, Integral>::type denormalize(const FloatingPoint& value) {
     static_assert(std::is_floating_point<typename FloatingPoint::Type>::value && std::is_integral<typename Integral::Type>::value,

@@ -40,7 +40,7 @@ template<class Display, class VisualId, class Window> class AbstractContextHandl
          */
         virtual VisualId getVisualId(Display nativeDisplay) = 0;
 
-        explicit AbstractContextHandler() = default;
+        explicit AbstractContextHandler();
 
         /**
          * @brief Destructor
@@ -58,6 +58,8 @@ template<class Display, class VisualId, class Window> class AbstractContextHandl
         /** @brief Swap buffers */
         virtual void swapBuffers() = 0;
 };
+
+template<class Display, class VisualId, class Window> inline AbstractContextHandler<Display, VisualId, Window>::AbstractContextHandler() = default;
 
 }}}
 

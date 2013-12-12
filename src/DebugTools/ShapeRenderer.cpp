@@ -118,12 +118,14 @@ template<UnsignedInt dimensions> ShapeRenderer<dimensions>::ShapeRenderer(Shapes
 }
 
 template<UnsignedInt dimensions> ShapeRenderer<dimensions>::~ShapeRenderer() {
-    for(auto i: renderers) delete i;
+    for(auto it = renderers.begin(); it != renderers.end(); ++it)
+        delete *it;
 }
 
 template<UnsignedInt dimensions> void ShapeRenderer<dimensions>::draw(const typename DimensionTraits<dimensions, Float>::MatrixType&, SceneGraph::AbstractCamera<dimensions, Float>& camera) {
     typename DimensionTraits<dimensions, Float>::MatrixType projectionMatrix = camera.projectionMatrix()*camera.cameraMatrix();
-    for(auto i: renderers) i->draw(options, projectionMatrix);
+    for(auto it = renderers.begin(); it != renderers.end(); ++it)
+        (*it)->draw(options, projectionMatrix);
 }
 
 template class ShapeRenderer<2>;
